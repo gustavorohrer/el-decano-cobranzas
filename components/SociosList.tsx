@@ -12,7 +12,7 @@ interface SociosListProps {
 const SociosList: React.FC<SociosListProps> = ({ socios, onAdd, onSelect }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
 
-  const filteredSocios = socios.filter(s => 
+  const filteredSocios = socios.filter(s =>
     `${s.nombre} ${s.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.numero_socio.includes(searchTerm)
   );
@@ -20,8 +20,8 @@ const SociosList: React.FC<SociosListProps> = ({ socios, onAdd, onSelect }) => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <h2 className="text-2xl font-bold text-emerald-900">Gestión de Socios</h2>
-        <button 
+        <h2 className="text-2xl font-bold text-emerald-900">Gestión de Socios (cambio)</h2>
+        <button
           onClick={onAdd}
           className="bg-emerald-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-900/20 font-bold"
         >
@@ -32,7 +32,7 @@ const SociosList: React.FC<SociosListProps> = ({ socios, onAdd, onSelect }) => {
 
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400" size={20} />
-        <input 
+        <input
           type="text"
           placeholder="Buscar por nombre o número de socio..."
           className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-sm border border-emerald-100 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm"
