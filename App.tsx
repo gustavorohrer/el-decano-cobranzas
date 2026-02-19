@@ -2,6 +2,7 @@
 import React from 'react';
 import { AppState, Member, UserRole, MemberPayment, AccountingMovement, MembershipRate, AdvertisingRate, AdvertisingContract, ClubConfig, Collector, User, SyncTask } from './types';
 import { StorageService } from './services/storage';
+import { useAppState } from './hooks/useAppState';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import MembersList from './components/MembersList.tsx';
@@ -19,19 +20,7 @@ import { Save, Upload, X, CheckCircle, Image, Download, FileSpreadsheet, AlertCi
 import * as XLSX from 'xlsx';
 
 const App: React.FC = () => {
-  const [appState, setAppState] = React.useState<AppState>({
-    user: StorageService.getCurrentUser(),
-    members: StorageService.getData().members,
-    payments: StorageService.getData().payments,
-    movements: StorageService.getData().movements,
-    membershipRates: StorageService.getData().membershipRates,
-    panels: StorageService.getData().panels,
-    advertisingContracts: StorageService.getData().advertisingContracts,
-    advertisingRates: StorageService.getData().advertisingRates,
-    clubConfig: StorageService.getData().clubConfig,
-    isOffline: !navigator.onLine,
-    syncQueue: StorageService.getData().syncQueue,
-  });
+  const { appState, setAppState, refreshData, isLoading } = useAppState();
 
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [selectedMember, setSelectedMember] = React.useState<Member | null>(null);
@@ -52,40 +41,16 @@ const App: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   const syncPendingData = async () => {
-    const queue = StorageService.getData().syncQueue;
+    const queue = appState.syncQueue;
     if (queue.length === 0) return;
     setIsSyncing(true);
-    for (const task of queue) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
+    // Logic for syncing will be implemented in the Repository/Hook later
     StorageService.clearSyncQueue();
     refreshData();
     setIsSyncing(false);
   };
 
-  React.useEffect(() => {
-    // Inicializar el año 2026 al cargar si no existe
-    StorageService.initializeYear(2026);
-    refreshData();
-
-    const handleOnline = () => {
-      setAppState(prev => ({ ...prev, isOffline: false }));
-      syncPendingData();
-    };
-    const handleOffline = () => setAppState(prev => ({ ...prev, isOffline: true }));
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    if (navigator.onLine) syncPendingData();
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  const refreshData = () => {
-    const data = StorageService.getData();
-    setAppState(prev => ({ ...prev, ...data, syncQueue: data.syncQueue }));
-  };
+  // refreshData is now handled by the hook
 
   const handleLogin = (user: User) => {
     setAppState(prev => ({ ...prev, user }));
