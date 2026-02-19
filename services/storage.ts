@@ -86,14 +86,24 @@ const migrateData = (data: any): StorageData => {
       date: m.fecha,
       type: m.tipo === 'ingreso' ? 'income' : 'expense',
       expense_group: m.grupo_egreso === 'socios' ? 'members' : (m.grupo_egreso === 'publicidad' ? 'advertising' : m.grupo_egreso),
-      category_id: m.categoria_id,
+      category_id: m.categoria_id === 'cuotas_socios' ? 'membership_fees' :
+                   m.categoria_id === 'libreria' ? 'stationery' :
+                   m.categoria_id === 'materiales' ? 'materials' :
+                   m.categoria_id === 'comisiones_socios' ? 'member_commissions' :
+                   m.categoria_id === 'cierre_caja' ? 'cash_closing' :
+                   m.categoria_id === 'publicidad' ? 'advertising' :
+                   m.categoria_id === 'pintado_cartel' ? 'panel_painting' :
+                   m.categoria_id === 'blanqueo_cartel' ? 'panel_whitewashing' :
+                   m.categoria_id === 'pintura' ? 'paint' :
+                   m.categoria_id === 'comisiones_carteleria' ? 'advertising_commissions' :
+                   m.categoria_id,
       description: m.description || m.descripcion,
       amount: m.monto,
       origin: m.origen === 'socios' ? 'members' : (m.origen === 'publicidad' ? 'advertising' : m.origen),
       reference_type: m.referencia_tipo === 'pago_socio' ? 'member_payment' : (m.referencia_tipo === 'contrato_publicidad' ? 'advertising_contract' : m.referencia_tipo),
-      reference_id: m.referencia_id,
-      is_annulled: m.anulado,
-      created_by: m.usuario_registro
+      reference_id: m.reference_id || m.referencia_id,
+      is_annulled: m.anulado || m.is_annulled || false,
+      created_by: m.usuario_registro || m.created_by || 'admin'
     })),
     membershipRates: (data.cuotasConfig || []).map((c: any) => ({
       id: c.id,
@@ -150,8 +160,15 @@ const migrateData = (data: any): StorageData => {
         dni: a.dni
       }))
     },
-    receiptCounter: data.reciboCounter || INITIAL_DATA.receiptCounter,
-    syncQueue: data.syncQueue || []
+    receiptCounter: data.reciboCounter || data.receiptCounter || INITIAL_DATA.receiptCounter,
+    syncQueue: (data.syncQueue || []).map((t: any) => ({
+      ...t,
+      type: t.type === 'SOCIO_CREATE' ? 'MEMBER_CREATE' :
+            t.type === 'PAGO_REGISTER' ? 'PAYMENT_REGISTER' :
+            t.type === 'EGRESO_ADD' ? 'EXPENSE_ADD' :
+            t.type === 'PUBLICIDAD_CONTRACT' ? 'ADVERTISING_CONTRACT' :
+            t.type === 'PUBLICIDAD_PAY' ? 'ADVERTISING_PAY' : t.type
+    }))
   };
 
   return migrated;
@@ -280,14 +297,14 @@ export const StorageService = {
   addMember(member: Member) {
     const data = this.getData();
     data.members.push(member);
-    this.addToSyncQueue('SOCIO_CREATE', member);
+    this.addToSyncQueue('MEMBER_CREATE', member);
     this.saveData(data);
   },
 
   importMembers(newMembers: Member[]) {
     const data = this.getData();
     data.members = [...data.members, ...newMembers];
-    newMembers.forEach(s => this.addToSyncQueue('SOCIO_CREATE', s));
+    newMembers.forEach(s => this.addToSyncQueue('MEMBER_CREATE', s));
     this.saveData(data);
   },
 
@@ -313,7 +330,7 @@ export const StorageService = {
     const data = this.getData();
     data.movements.push(movement);
     if (movement.type === 'expense') {
-      this.addToSyncQueue('EGRESO_ADD', movement);
+      this.addToSyncQueue('EXPENSE_ADD', movement);
     }
     this.saveData(data);
   },
@@ -370,7 +387,7 @@ export const StorageService = {
       created_by: payment.created_by,
     };
     data.movements.push(movement);
-    this.addToSyncQueue('PAGO_REGISTER', { payment, movement });
+    this.addToSyncQueue('PAYMENT_REGISTER', { payment, movement });
     this.saveData(data);
   },
 

@@ -123,7 +123,7 @@ export interface ClubConfig {
 // Nueva interfaz para tareas de sincronización
 export interface SyncTask {
   id: string;
-  type: 'SOCIO_CREATE' | 'PAGO_REGISTER' | 'EGRESO_ADD' | 'PUBLICIDAD_CONTRACT' | 'PUBLICIDAD_PAY';
+  type: 'MEMBER_CREATE' | 'PAYMENT_REGISTER' | 'EXPENSE_ADD' | 'ADVERTISING_CONTRACT' | 'ADVERTISING_PAY';
   payload: any;
   timestamp: string;
 }
