@@ -28,7 +28,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
   const [selectedPanel, setSelectedPanel] = React.useState<AdvertisingPanel | null>(null);
   const [showForm, setShowForm] = React.useState(false);
   const [viewState, setViewState] = React.useState<'choice' | 'details' | 'sell' | 'associate'>('choice');
-  const [activeTab, setActiveTab] = React.useState<'mapa' | 'vencimientos'>('mapa');
+  const [activeTab, setActiveTab] = React.useState<'map' | 'expirations'>('map');
 
   // Estados para filtros de vencimientos
   const [searchClient, setSearchClient] = React.useState('');
@@ -210,20 +210,20 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
       {/* Tabs */}
       <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
         <button
-          onClick={() => setActiveTab('mapa')}
-          className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'mapa' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
+          onClick={() => setActiveTab('map')}
+          className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'map' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
         >
           Mapa de Paneles
         </button>
         <button
-          onClick={() => setActiveTab('vencimientos')}
-          className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'vencimientos' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
+          onClick={() => setActiveTab('expirations')}
+          className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'expirations' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
         >
           Vencimientos
         </button>
       </div>
 
-      {activeTab === 'mapa' ? (
+      {activeTab === 'map' ? (
         <>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-2xl font-bold flex items-center gap-2">

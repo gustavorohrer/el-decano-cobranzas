@@ -36,12 +36,12 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [selectedMember, setSelectedMember] = React.useState<Member | null>(null);
   const [isAddingMember, setIsAddingMember] = React.useState(false);
-  const [adminView, setAdminView] = React.useState<'main' | 'cuotas' | 'publicidad_config' | 'institucional' | 'recibos' | 'usuarios'>('main');
+  const [adminView, setAdminView] = React.useState<'main' | 'membership_rates' | 'advertising_rates' | 'institutional' | 'receipts' | 'users'>('main');
 
   // SE ESTABLECE 2026 COMO AÑO DE INICIO PARA CONFIGURACIÓN
   const [adminSelectedYear, setAdminSelectedYear] = React.useState(2026);
 
-  const [showEgresoModal, setShowEgresoModal] = React.useState(false);
+  const [showExpenseModal, setShowExpenseModal] = React.useState(false);
   const [expenseGroup, setExpenseGroup] = React.useState<'members' | 'advertising'>('members');
   const [pagoToAnnul, setPagoToAnnul] = React.useState<string | null>(null);
   const [isSyncing, setIsSyncing] = React.useState(false);
@@ -158,7 +158,7 @@ const App: React.FC = () => {
 
     StorageService.addMovement(movement);
     refreshData();
-    setShowEgresoModal(false);
+    setShowExpenseModal(false);
   };
 
   const handleAddCollector = () => {
@@ -209,22 +209,22 @@ const App: React.FC = () => {
         if (selectedMember) return <PaymentsManagement member={selectedMember} payments={appState.payments.filter(p => p.member_id === selectedMember.id)} membershipRates={appState.membershipRates} onRegister={handleRegisterPayment} onClose={() => setSelectedMember(null)} />;
         if (isAddingMember) return <MemberForm onSave={handleSaveNewMember} onCancel={() => setIsAddingMember(false)} existingNumbers={appState.members.map(s => s.member_number)} existingDnis={appState.members.map(s => s.dni)} />;
         return <MembersList members={appState.members} onAdd={() => setIsAddingMember(true)} onSelect={setSelectedMember} />;
-      case 'publicidad': return <AdvertisingPanels panels={appState.panels} advertisingContracts={appState.advertisingContracts} advertisingRates={appState.advertisingRates} clubConfig={appState.clubConfig} userRole={appState.user?.role || UserRole.COBRADOR} onRegisterContract={(contract) => { StorageService.addAdvertisingContract(contract, appState.user?.id || 'admin'); refreshData(); }} onRegisterPayment={(cid, amount) => { StorageService.registerAdvertisingPayment(cid, amount, appState.user?.id || 'admin'); refreshData(); }} onRefresh={refreshData} />;
-      case 'contabilidad':
+      case 'advertising': return <AdvertisingPanels panels={appState.panels} advertisingContracts={appState.advertisingContracts} advertisingRates={appState.advertisingRates} clubConfig={appState.clubConfig} userRole={appState.user?.role || UserRole.COBRADOR} onRegisterContract={(contract) => { StorageService.addAdvertisingContract(contract, appState.user?.id || 'admin'); refreshData(); }} onRegisterPayment={(cid, amount) => { StorageService.registerAdvertisingPayment(cid, amount, appState.user?.id || 'admin'); refreshData(); }} onRefresh={refreshData} />;
+      case 'accounting':
         return (
           <AccountingModule
             movements={appState.movements}
             members={appState.members}
             userRole={appState.user?.role}
-            onAddExpense={() => setShowEgresoModal(true)}
+            onAddExpense={() => setShowExpenseModal(true)}
             onRefresh={refreshData}
           />
         );
-      case 'reportes': return <ReportsModule movements={appState.movements} members={appState.members} advertisingContracts={appState.advertisingContracts} />;
+      case 'reports': return <ReportsModule movements={appState.movements} members={appState.members} advertisingContracts={appState.advertisingContracts} />;
       case 'admin':
-        if (adminView === 'usuarios') return <UserManagement onRefresh={refreshData} onBack={() => setAdminView('main')} />;
+        if (adminView === 'users') return <UserManagement onRefresh={refreshData} onBack={() => setAdminView('main')} />;
 
-        if (adminView === 'cuotas') {
+        if (adminView === 'membership_rates') {
           return (
             <div className="space-y-6">
               <div className="flex items-center gap-4">
@@ -298,7 +298,7 @@ const App: React.FC = () => {
           );
         }
 
-        if (adminView === 'publicidad_config') {
+        if (adminView === 'advertising_rates') {
           return (
             <div className="space-y-6">
               <div className="flex items-center gap-4">
@@ -371,7 +371,7 @@ const App: React.FC = () => {
           );
         }
 
-        if (adminView === 'institucional') {
+        if (adminView === 'institutional') {
           return (
             <div className="space-y-8">
               <button onClick={() => setAdminView('main')} className="text-emerald-700 font-bold flex items-center gap-1 hover:underline"><ArrowLeft size={18} /> Volver</button>
@@ -460,7 +460,7 @@ const App: React.FC = () => {
           );
         }
 
-        if (adminView === 'recibos') {
+        if (adminView === 'receipts') {
           const isAdmin = appState.user?.role === UserRole.ADMIN_GENERAL;
           const filteredRecibos = appState.payments.sort((a,b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime());
 
@@ -510,11 +510,11 @@ const App: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                { id: 'cuotas', label: 'Valores Cuotas', desc: 'Precios de socios por categoría.', icon: CreditCard, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-                { id: 'publicidad_config', label: 'Valores Publicidad', desc: 'Precios planes de cartelería.', icon: LayoutGrid, color: 'text-indigo-700', bg: 'bg-indigo-50' },
-                { id: 'institucional', label: 'Datos Institucionales', desc: 'Firmas de contrato y cobradores.', icon: Building2, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-                { id: 'recibos', label: 'Gestión de Recibos', desc: 'Auditoría histórica de cobros.', icon: Printer, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-                { id: 'usuarios', label: 'Gestión Usuarios', desc: 'Cuentas y permisos de acceso.', icon: Users, color: 'text-indigo-700', bg: 'bg-indigo-50' }
+                { id: 'membership_rates', label: 'Valores Cuotas', desc: 'Precios de socios por categoría.', icon: CreditCard, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+                { id: 'advertising_rates', label: 'Valores Publicidad', desc: 'Precios planes de cartelería.', icon: LayoutGrid, color: 'text-indigo-700', bg: 'bg-indigo-50' },
+                { id: 'institutional', label: 'Datos Institucionales', desc: 'Firmas de contrato y cobradores.', icon: Building2, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+                { id: 'receipts', label: 'Gestión de Recibos', desc: 'Auditoría histórica de cobros.', icon: Printer, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+                { id: 'users', label: 'Gestión Usuarios', desc: 'Cuentas y permisos de acceso.', icon: Users, color: 'text-indigo-700', bg: 'bg-indigo-50' }
               ].map(card => (
                 <button
                   key={card.id}
@@ -549,12 +549,12 @@ const App: React.FC = () => {
       >
         <div className={appState.isOffline ? 'pt-10' : ''}>{renderContent()}</div>
 
-        {showEgresoModal && (
+        {showExpenseModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
             <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-200">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-black text-slate-900 tracking-tight">Registrar Egreso</h3>
-                <button onClick={() => setShowEgresoModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={24} className="text-slate-400" /></button>
+                <button onClick={() => setShowExpenseModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={24} className="text-slate-400" /></button>
               </div>
               <form onSubmit={handleSaveExpense} className="space-y-6">
                 <div className="space-y-2">
