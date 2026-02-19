@@ -6,94 +6,94 @@ export enum UserRole {
   COBRADOR = 'COBRADOR'
 }
 
-export type MemberCategory = 'general' | 'grupo_familiar';
+export type MemberCategory = 'general' | 'family_group';
 
 export interface Member {
   id: string;
-  numero_socio: string;
-  nombre: string;
-  apellido: string;
+  member_number: string;
+  first_name: string;
+  last_name: string;
   dni: string;
-  telefono: string;
-  direccion: string;
-  categoria: MemberCategory;
+  phone: string;
+  address: string;
+  category: MemberCategory;
   created_at: string;
 }
 
 export interface MembershipRate {
   id: string;
-  año: number;
-  mes: number;
-  categoria: MemberCategory;
-  valor: number;
+  year: number;
+  month: number;
+  category: MemberCategory;
+  amount: number;
 }
 
 export interface MemberPayment {
   id: string;
-  socio_id: string;
-  año: number;
-  mes: number;
-  monto: number;
-  fecha_pago: string;
-  recibo_numero: string;
-  anulado: boolean;
-  usuario_registro: string;
+  member_id: string;
+  year: number;
+  month: number;
+  amount: number;
+  payment_date: string;
+  receipt_number: string;
+  is_annulled: boolean;
+  created_by: string;
 }
 
-export type PanelStatus = 'disponible' | 'reservado' | 'vendido';
-export type PanelType = '1_panel' | '1_5_panel' | '2_paneles' | '3_paneles';
+export type PanelStatus = 'available' | 'reserved' | 'sold';
+export type PanelType = '1_panel' | '1_5_panel' | '2_panels' | '3_panels';
 
 export interface AdvertisingPanel {
   id: string;
-  numero_panel: number;
-  estado: PanelStatus;
-  agrupacion_id?: string;
-  contrato_id?: string;
+  panel_number: number;
+  status: PanelStatus;
+  group_id?: string;
+  contract_id?: string;
 }
 
 export interface AdvertisingContract {
   id: string;
-  año: number;
-  cliente: string;
-  representante_legal?: string;
-  dni_representante?: string;
-  telefono: string;
-  direccion: string;
+  year: number;
+  client_name: string;
+  legal_representative?: string;
+  representative_dni?: string;
+  phone: string;
+  address: string;
   panel_id: string;
-  tipo_panel: PanelType;
-  modalidad_pago: 'contado' | '1' | '2' | '3';
-  valor_total: number;
-  monto_cuota: number;
-  cuotas_pagadas: number;
-  agente_cobranza_id?: string;
+  panel_type: PanelType;
+  payment_method: 'cash' | '1' | '2' | '3';
+  total_amount: number;
+  installment_amount: number;
+  installments_paid: number;
+  collector_id?: string;
   created_at: string;
-  fecha_inicio: string; // Nuevo campo
-  fecha_vencimiento: string;
+  start_date: string; // Nuevo campo
+  expiry_date: string;
 }
 
 export interface AdvertisingRate {
   id: string;
-  año: number;
-  tipo_panel: PanelType;
-  valor_contado: number;
-  valor_1_cuota: number;
-  valor_2_cuotas: number;
-  valor_3_cuotas: number;
+  year: number;
+  panel_type: PanelType;
+  cash_price: number;
+  one_installment_price: number;
+  two_installments_price: number;
+  three_installments_price: number;
 }
 
 export interface AccountingMovement {
   id: string;
-  fecha: string;
-  tipo: 'ingreso' | 'egreso';
-  grupo_egreso?: 'socios' | 'publicidad';
-  categoria_id: string;
-  descripcion: string;
-  monto: number;
-  origen: 'manual' | 'socios' | 'publicidad';
-  referencia_tipo?: 'pago_socio' | 'contrato_publicidad' | 'none';
-  referencia_id?: string;
-  anulado: boolean;
-  usuario_registro: string;
+  date: string;
+  type: 'income' | 'expense';
+  expense_group?: 'members' | 'advertising';
+  category_id: string;
+  description: string;
+  amount: number;
+  origin: 'manual' | 'members' | 'advertising';
+  reference_type?: 'member_payment' | 'advertising_contract' | 'none';
+  reference_id?: string;
+  is_annulled: boolean;
+  created_by: string;
 }
 
 export interface User {
@@ -106,18 +106,18 @@ export interface User {
 
 export interface Collector {
   id: string;
-  nombre_apellido: string;
+  full_name: string;
   dni: string;
 }
 
 export interface ClubConfig {
-  presidente: {
-    nombre_apellido: string;
+  president: {
+    full_name: string;
     dni: string;
-    estado_civil: string;
-    direccion: string;
+    civil_status: string;
+    address: string;
   };
-  agentes_cobranza: Collector[];
+  collectors: Collector[];
 }
 
 // Nueva interfaz para tareas de sincronización
@@ -130,13 +130,13 @@ export interface SyncTask {
 
 export interface AppState {
   user: User | null;
-  socios: Member[];
-  pagos: MemberPayment[];
-  movimientos: AccountingMovement[];
-  cuotasConfig: MembershipRate[];
-  paneles: AdvertisingPanel[];
-  contratosPublicidad: AdvertisingContract[];
-  publicidadValores: AdvertisingRate[];
+  members: Member[];
+  payments: MemberPayment[];
+  movements: AccountingMovement[];
+  membershipRates: MembershipRate[];
+  panels: AdvertisingPanel[];
+  advertisingContracts: AdvertisingContract[];
+  advertisingRates: AdvertisingRate[];
   clubConfig: ClubConfig;
   isOffline: boolean;
   syncQueue: SyncTask[];

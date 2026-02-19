@@ -6,15 +6,15 @@ const SESSION_KEY = 'club_barrio_session';
 
 interface StorageData {
   users: User[];
-  socios: Member[];
-  pagos: MemberPayment[];
-  movimientos: AccountingMovement[];
-  cuotasConfig: MembershipRate[];
-  paneles: AdvertisingPanel[];
-  contratosPublicidad: AdvertisingContract[];
-  publicidadValores: AdvertisingRate[];
+  members: Member[];
+  payments: MemberPayment[];
+  movements: AccountingMovement[];
+  membershipRates: MembershipRate[];
+  panels: AdvertisingPanel[];
+  advertisingContracts: AdvertisingContract[];
+  advertisingRates: AdvertisingRate[];
   clubConfig: ClubConfig;
-  reciboCounter: { [año: number]: number };
+  receiptCounter: { [year: number]: number };
   syncQueue: SyncTask[];
 }
 
@@ -23,37 +23,146 @@ const INITIAL_DATA: StorageData = {
     { id: 'admin-1', email: 'admin@club.com', password: 'admin', role: UserRole.ADMIN_GENERAL, active: true },
     { id: 'admin-tony', email: 'Agalli33@hotmail.com', password: 'Tony1433', role: UserRole.ADMIN_GENERAL, active: true }
   ],
-  socios: [],
-  pagos: [],
-  movimientos: [],
-  cuotasConfig: Array.from({ length: 12 }, (_, i) => ([
-    { id: `c-gen-${2024}-${i+1}`, año: 2024, mes: i + 1, categoria: 'general' as const, valor: 2500 },
-    { id: `c-fam-${2024}-${i+1}`, año: 2024, mes: i + 1, categoria: 'grupo_familiar' as const, valor: 4500 },
+  members: [],
+  payments: [],
+  movements: [],
+  membershipRates: Array.from({ length: 12 }, (_, i) => ([
+    { id: `c-gen-${2024}-${i+1}`, year: 2024, month: i + 1, category: 'general' as const, amount: 2500 },
+    { id: `c-fam-${2024}-${i+1}`, year: 2024, month: i + 1, category: 'family_group' as const, amount: 4500 },
   ])).flat(),
-  publicidadValores: [
-    { id: 'v1-2024', año: 2024, tipo_panel: '1_panel', valor_contado: 150000, valor_1_cuota: 160000, valor_2_cuotas: 85000, valor_3_cuotas: 60000 },
-    { id: 'v2-2024', año: 2024, tipo_panel: '1_5_panel', valor_contado: 220000, valor_1_cuota: 235000, valor_2_cuotas: 125000, valor_3_cuotas: 90000 },
-    { id: 'v3-2024', año: 2024, tipo_panel: '2_paneles', valor_contado: 280000, valor_1_cuota: 300000, valor_2_cuotas: 160000, valor_3_cuotas: 115000 },
-    { id: 'v4-2024', año: 2024, tipo_panel: '3_paneles', valor_contado: 400000, valor_1_cuota: 430000, valor_2_cuotas: 230000, valor_3_cuotas: 165000 },
+  advertisingRates: [
+    { id: 'v1-2024', year: 2024, panel_type: '1_panel', cash_price: 150000, one_installment_price: 160000, two_installments_price: 85000, three_installments_price: 60000 },
+    { id: 'v2-2024', year: 2024, panel_type: '1_5_panel', cash_price: 220000, one_installment_price: 235000, two_installments_price: 125000, three_installments_price: 90000 },
+    { id: 'v3-2024', year: 2024, panel_type: '2_panels', cash_price: 280000, one_installment_price: 300000, two_installments_price: 160000, three_installments_price: 115000 },
+    { id: 'v4-2024', year: 2024, panel_type: '3_panels', cash_price: 400000, one_installment_price: 430000, two_installments_price: 230000, three_installments_price: 165000 },
   ],
-  contratosPublicidad: [],
-  paneles: Array.from({ length: 72 }, (_, i) => ({
+  advertisingContracts: [],
+  panels: Array.from({ length: 72 }, (_, i) => ({
     id: `p-${i + 1}`,
-    numero_panel: i + 1,
-    estado: 'disponible',
+    panel_number: i + 1,
+    status: 'available',
   })),
   clubConfig: {
-    presidente: { nombre_apellido: '', dni: '', estado_civil: '', direccion: '' },
-    agentes_cobranza: []
+    president: { full_name: '', dni: '', civil_status: '', address: '' },
+    collectors: []
   },
-  reciboCounter: { 2024: 0 },
+  receiptCounter: { 2024: 0 },
   syncQueue: []
+};
+
+const migrateData = (data: any): StorageData => {
+  if (!data) return INITIAL_DATA;
+
+  // Check if data is already in English format
+  if (data.members !== undefined) return data;
+
+  // Migration from Spanish to English
+  const migrated: StorageData = {
+    users: data.users || INITIAL_DATA.users,
+    members: (data.socios || []).map((s: any) => ({
+      id: s.id,
+      member_number: s.numero_socio,
+      first_name: s.nombre,
+      last_name: s.apellido,
+      dni: s.dni,
+      phone: s.telefono,
+      address: s.direccion,
+      category: s.categoria === 'grupo_familiar' ? 'family_group' : 'general',
+      created_at: s.created_at
+    })),
+    payments: (data.pagos || []).map((p: any) => ({
+      id: p.id,
+      member_id: p.socio_id,
+      year: p.año,
+      month: p.mes,
+      amount: p.monto,
+      payment_date: p.fecha_pago,
+      receipt_number: p.recibo_numero,
+      is_annulled: p.anulado,
+      created_by: p.usuario_registro
+    })),
+    movements: (data.movimientos || []).map((m: any) => ({
+      id: m.id,
+      date: m.fecha,
+      type: m.tipo === 'ingreso' ? 'income' : 'expense',
+      expense_group: m.grupo_egreso === 'socios' ? 'members' : (m.grupo_egreso === 'publicidad' ? 'advertising' : m.grupo_egreso),
+      category_id: m.categoria_id,
+      description: m.description || m.descripcion,
+      amount: m.monto,
+      origin: m.origen === 'socios' ? 'members' : (m.origen === 'publicidad' ? 'advertising' : m.origen),
+      reference_type: m.referencia_tipo === 'pago_socio' ? 'member_payment' : (m.referencia_tipo === 'contrato_publicidad' ? 'advertising_contract' : m.referencia_tipo),
+      reference_id: m.referencia_id,
+      is_annulled: m.anulado,
+      created_by: m.usuario_registro
+    })),
+    membershipRates: (data.cuotasConfig || []).map((c: any) => ({
+      id: c.id,
+      year: c.año,
+      month: c.mes,
+      category: c.categoria === 'grupo_familiar' ? 'family_group' : 'general',
+      amount: c.valor
+    })),
+    panels: (data.paneles || []).map((p: any) => ({
+      id: p.id,
+      panel_number: p.numero_panel,
+      status: p.estado === 'disponible' ? 'available' : (p.estado === 'reservado' ? 'reserved' : 'sold'),
+      group_id: p.agrupacion_id,
+      contract_id: p.contrato_id
+    })),
+    advertisingContracts: (data.contratosPublicidad || []).map((c: any) => ({
+      id: c.id,
+      year: c.año,
+      client_name: c.cliente,
+      legal_representative: c.representante_legal,
+      representative_dni: c.dni_representante,
+      phone: c.telefono,
+      address: c.direccion,
+      panel_id: c.panel_id,
+      panel_type: c.tipo_panel === '2_paneles' ? '2_panels' : (c.tipo_panel === '3_paneles' ? '3_panels' : c.tipo_panel),
+      payment_method: c.modalidad_pago === 'contado' ? 'cash' : c.modalidad_pago,
+      total_amount: c.valor_total,
+      installment_amount: c.monto_cuota,
+      installments_paid: c.cuotas_pagadas,
+      collector_id: c.agente_cobranza_id,
+      created_at: c.created_at,
+      start_date: c.fecha_inicio,
+      expiry_date: c.fecha_vencimiento
+    })),
+    advertisingRates: (data.publicidadValores || []).map((r: any) => ({
+      id: r.id,
+      year: r.año,
+      panel_type: r.tipo_panel === '2_paneles' ? '2_panels' : (r.tipo_panel === '3_paneles' ? '3_panels' : r.tipo_panel),
+      cash_price: r.valor_contado,
+      one_installment_price: r.valor_1_cuota,
+      two_installments_price: r.valor_2_cuotas,
+      three_installments_price: r.valor_3_cuotas
+    })),
+    clubConfig: {
+      president: {
+        full_name: data.clubConfig?.presidente?.nombre_apellido || '',
+        dni: data.clubConfig?.presidente?.dni || '',
+        civil_status: data.clubConfig?.presidente?.estado_civil || '',
+        address: data.clubConfig?.presidente?.direccion || ''
+      },
+      collectors: (data.clubConfig?.agentes_cobranza || []).map((a: any) => ({
+        id: a.id,
+        full_name: a.nombre_apellido,
+        dni: a.dni
+      }))
+    },
+    receiptCounter: data.reciboCounter || INITIAL_DATA.receiptCounter,
+    syncQueue: data.syncQueue || []
+  };
+
+  return migrated;
 };
 
 export const StorageService = {
   getData(): StorageData {
     const data = localStorage.getItem(STORAGE_KEY);
-    const parsed = data ? JSON.parse(data) : INITIAL_DATA;
+    let parsed = data ? JSON.parse(data) : INITIAL_DATA;
+
+    parsed = migrateData(parsed);
 
     if (parsed.users && !parsed.users.find((u: User) => u.email === 'Agalli33@hotmail.com')) {
       parsed.users.push({ id: 'admin-tony', email: 'Agalli33@hotmail.com', password: 'Tony1433', role: UserRole.ADMIN_GENERAL, active: true });
@@ -61,9 +170,9 @@ export const StorageService = {
     }
 
     if (!parsed.users) parsed.users = INITIAL_DATA.users;
-    if (!parsed.contratosPublicidad) parsed.contratosPublicidad = [];
+    if (!parsed.advertisingContracts) parsed.advertisingContracts = [];
     if (!parsed.clubConfig) parsed.clubConfig = INITIAL_DATA.clubConfig;
-    if (!parsed.reciboCounter) parsed.reciboCounter = INITIAL_DATA.reciboCounter;
+    if (!parsed.receiptCounter) parsed.receiptCounter = INITIAL_DATA.receiptCounter;
     if (!parsed.syncQueue) parsed.syncQueue = [];
     return parsed;
   },
@@ -124,28 +233,28 @@ export const StorageService = {
     this.saveData(data);
   },
 
-  initializeYear(año: number) {
+  initializeYear(year: number) {
     const data = this.getData();
-    const hasCuotas = data.cuotasConfig.some(c => c.año === año);
+    const hasCuotas = data.membershipRates.some(c => c.year === year);
     if (!hasCuotas) {
       const newCuotas = Array.from({ length: 12 }, (_, i) => ([
-        { id: `c-gen-${año}-${i+1}`, año: año, mes: i + 1, categoria: 'general' as const, valor: 2500 },
-        { id: `c-fam-${año}-${i+1}`, año: año, mes: i + 1, categoria: 'grupo_familiar' as const, valor: 4500 },
+        { id: `c-gen-${year}-${i+1}`, year: year, month: i + 1, category: 'general' as const, amount: 2500 },
+        { id: `c-fam-${year}-${i+1}`, year: year, month: i + 1, category: 'family_group' as const, amount: 4500 },
       ])).flat();
-      data.cuotasConfig = [...data.cuotasConfig, ...newCuotas];
+      data.membershipRates = [...data.membershipRates, ...newCuotas];
     }
-    const hasPublicidad = data.publicidadValores.some(v => v.año === año);
+    const hasPublicidad = data.advertisingRates.some(v => v.year === year);
     if (!hasPublicidad) {
       const newPublicidad = [
-        { id: `v1-${año}`, año: año, tipo_panel: '1_panel' as const, valor_contado: 150000, valor_1_cuota: 160000, valor_2_cuotas: 85000, valor_3_cuotas: 60000 },
-        { id: `v2-${año}`, año: año, tipo_panel: '1_5_panel' as const, valor_contado: 220000, valor_1_cuota: 235000, valor_2_cuotas: 125000, valor_3_cuotas: 90000 },
-        { id: `v3-${año}`, año: año, tipo_panel: '2_paneles' as const, valor_contado: 280000, valor_1_cuota: 300000, valor_2_cuotas: 160000, valor_3_cuotas: 115000 },
-        { id: `v4-${año}`, año: año, tipo_panel: '3_paneles' as const, valor_contado: 400000, valor_1_cuota: 430000, valor_2_cuotas: 230000, valor_3_cuotas: 165000 },
+        { id: `v1-${year}`, year: year, panel_type: '1_panel' as const, cash_price: 150000, one_installment_price: 160000, two_installments_price: 85000, three_installments_price: 60000 },
+        { id: `v2-${year}`, year: year, panel_type: '1_5_panel' as const, cash_price: 220000, one_installment_price: 235000, two_installments_price: 125000, three_installments_price: 90000 },
+        { id: `v3-${year}`, year: year, panel_type: '2_panels' as const, cash_price: 280000, one_installment_price: 300000, two_installments_price: 160000, three_installments_price: 115000 },
+        { id: `v4-${year}`, year: year, panel_type: '3_panels' as const, cash_price: 400000, one_installment_price: 430000, two_installments_price: 230000, three_installments_price: 165000 },
       ];
-      data.publicidadValores = [...data.publicidadValores, ...newPublicidad];
+      data.advertisingRates = [...data.advertisingRates, ...newPublicidad];
     }
-    if (!data.reciboCounter[año]) {
-      data.reciboCounter[año] = 0;
+    if (!data.receiptCounter[year]) {
+      data.receiptCounter[year] = 0;
     }
     this.saveData(data);
   },
@@ -156,177 +265,177 @@ export const StorageService = {
     this.saveData(data);
   },
 
-  addAgente(agente: Collector) {
+  addCollector(collector: Collector) {
     const data = this.getData();
-    data.clubConfig.agentes_cobranza.push(agente);
+    data.clubConfig.collectors.push(collector);
     this.saveData(data);
   },
 
-  removeAgente(id: string) {
+  removeCollector(id: string) {
     const data = this.getData();
-    data.clubConfig.agentes_cobranza = data.clubConfig.agentes_cobranza.filter(a => a.id !== id);
+    data.clubConfig.collectors = data.clubConfig.collectors.filter(a => a.id !== id);
     this.saveData(data);
   },
 
-  addSocio(socio: Member) {
+  addMember(member: Member) {
     const data = this.getData();
-    data.socios.push(socio);
-    this.addToSyncQueue('SOCIO_CREATE', socio);
+    data.members.push(member);
+    this.addToSyncQueue('SOCIO_CREATE', member);
     this.saveData(data);
   },
 
-  importSocios(newSocios: Member[]) {
+  importMembers(newMembers: Member[]) {
     const data = this.getData();
-    data.socios = [...data.socios, ...newSocios];
-    newSocios.forEach(s => this.addToSyncQueue('SOCIO_CREATE', s));
+    data.members = [...data.members, ...newMembers];
+    newMembers.forEach(s => this.addToSyncQueue('SOCIO_CREATE', s));
     this.saveData(data);
   },
 
-  updateCuotaConfig(id: string, valor: number) {
+  updateMembershipRate(id: string, amount: number) {
     const data = this.getData();
-    const config = data.cuotasConfig.find(c => c.id === id);
+    const config = data.membershipRates.find(c => c.id === id);
     if (config) {
-      config.valor = valor;
+      config.amount = amount;
       this.saveData(data);
     }
   },
 
-  updatePublicidadConfig(id: string, field: keyof AdvertisingRate, valor: number) {
+  updateAdvertisingRate(id: string, field: keyof AdvertisingRate, amount: number) {
     const data = this.getData();
-    const config = data.publicidadValores.find(c => c.id === id);
+    const config = data.advertisingRates.find(c => c.id === id);
     if (config) {
-      (config as any)[field] = valor;
+      (config as any)[field] = amount;
       this.saveData(data);
     }
   },
 
-  addMovimiento(movimiento: AccountingMovement) {
+  addMovement(movement: AccountingMovement) {
     const data = this.getData();
-    data.movimientos.push(movimiento);
-    if (movimiento.tipo === 'egreso') {
-      this.addToSyncQueue('EGRESO_ADD', movimiento);
+    data.movements.push(movement);
+    if (movement.type === 'expense') {
+      this.addToSyncQueue('EGRESO_ADD', movement);
     }
     this.saveData(data);
   },
 
-  updateMovimiento(id: string, updates: Partial<AccountingMovement>) {
+  updateMovement(id: string, updates: Partial<AccountingMovement>) {
     const data = this.getData();
-    const index = data.movimientos.findIndex(m => m.id === id);
+    const index = data.movements.findIndex(m => m.id === id);
     if (index !== -1) {
-      data.movimientos[index] = { ...data.movimientos[index], ...updates };
+      data.movements[index] = { ...data.movements[index], ...updates };
 
-      if (data.movimientos[index].referencia_tipo === 'pago_socio' && updates.monto !== undefined) {
-        const pago = data.pagos.find(p => p.id === data.movimientos[index].referencia_id);
-        if (pago) pago.monto = updates.monto;
+      if (data.movements[index].reference_type === 'member_payment' && updates.amount !== undefined) {
+        const payment = data.payments.find(p => p.id === data.movements[index].reference_id);
+        if (payment) payment.amount = updates.amount;
       }
 
       this.saveData(data);
     }
   },
 
-  deleteMovimiento(id: string) {
+  deleteMovement(id: string) {
     const data = this.getData();
-    const mov = data.movimientos.find(m => m.id === id);
+    const mov = data.movements.find(m => m.id === id);
 
     if (mov) {
-      if (mov.referencia_tipo === 'pago_socio') {
-        data.pagos = data.pagos.filter(p => p.id !== mov.referencia_id);
-      } else if (mov.referencia_tipo === 'contrato_publicidad') {
-        const contrato = data.contratosPublicidad.find(c => c.id === mov.referencia_id);
-        if (contrato) {
-          contrato.cuotas_pagadas = Math.max(0, contrato.cuotas_pagadas - 1);
+      if (mov.reference_type === 'member_payment') {
+        data.payments = data.payments.filter(p => p.id !== mov.reference_id);
+      } else if (mov.reference_type === 'advertising_contract') {
+        const contract = data.advertisingContracts.find(c => c.id === mov.reference_id);
+        if (contract) {
+          contract.installments_paid = Math.max(0, contract.installments_paid - 1);
         }
       }
 
-      data.movimientos = data.movimientos.filter(m => m.id !== id);
+      data.movements = data.movements.filter(m => m.id !== id);
       this.saveData(data);
     }
   },
 
-  registerPago(pago: MemberPayment) {
+  registerPayment(payment: MemberPayment) {
     const data = this.getData();
-    data.pagos.push(pago);
+    data.payments.push(payment);
 
-    const movimiento: AccountingMovement = {
+    const movement: AccountingMovement = {
       id: crypto.randomUUID(),
-      fecha: pago.fecha_pago,
-      tipo: 'ingreso',
-      categoria_id: 'cuotas_socios',
-      descripcion: `Cobro cuota ${pago.mes}/${pago.año} - Socio ${pago.socio_id}`,
-      monto: pago.monto,
-      origen: 'socios',
-      referencia_tipo: 'pago_socio',
-      referencia_id: pago.id,
-      anulado: false,
-      usuario_registro: pago.usuario_registro,
+      date: payment.payment_date,
+      type: 'income',
+      category_id: 'membership_fees',
+      description: `Cobro cuota ${payment.month}/${payment.year} - Member ${payment.member_id}`,
+      amount: payment.amount,
+      origin: 'members',
+      reference_type: 'member_payment',
+      reference_id: payment.id,
+      is_annulled: false,
+      created_by: payment.created_by,
     };
-    data.movimientos.push(movimiento);
-    this.addToSyncQueue('PAGO_REGISTER', { pago, movimiento });
+    data.movements.push(movement);
+    this.addToSyncQueue('PAGO_REGISTER', { payment, movement });
     this.saveData(data);
   },
 
-  annulPago(pagoId: string) {
+  annulPayment(paymentId: string) {
     const data = this.getData();
-    const pago = data.pagos.find(p => p.id === pagoId);
-    if (pago) {
-      pago.anulado = true;
-      const mov = data.movimientos.find(m => m.referencia_id === pagoId && m.referencia_tipo === 'pago_socio');
-      if (mov) mov.anulado = true;
+    const payment = data.payments.find(p => p.id === paymentId);
+    if (payment) {
+      payment.is_annulled = true;
+      const mov = data.movements.find(m => m.reference_id === paymentId && m.reference_type === 'member_payment');
+      if (mov) mov.is_annulled = true;
       this.saveData(data);
     }
   },
 
-  addContratoPublicidad(contrato: AdvertisingContract, usuario_id: string) {
+  addAdvertisingContract(contract: AdvertisingContract, userId: string) {
     const data = this.getData();
-    data.contratosPublicidad.push(contrato);
-    const panel = data.paneles.find(p => p.id === contrato.panel_id);
-    let movimiento: AccountingMovement | null = null;
+    data.advertisingContracts.push(contract);
+    const panel = data.panels.find(p => p.id === contract.panel_id);
+    let movement: AccountingMovement | null = null;
 
     if (panel) {
-      panel.estado = 'vendido';
-      panel.contrato_id = contrato.id;
-      if (panel.agrupacion_id) {
-        data.paneles.forEach(p => {
-          if (p.agrupacion_id === panel.agrupacion_id) {
-            p.estado = 'vendido';
-            p.contrato_id = contrato.id;
+      panel.status = 'sold';
+      panel.contract_id = contract.id;
+      if (panel.group_id) {
+        data.panels.forEach(p => {
+          if (p.group_id === panel.group_id) {
+            p.status = 'sold';
+            p.contract_id = contract.id;
           }
         });
       }
     }
-    if (contrato.modalidad_pago === 'contado') {
-      movimiento = {
+    if (contract.payment_method === 'cash') {
+      movement = {
         id: crypto.randomUUID(),
-        fecha: contrato.created_at,
-        tipo: 'ingreso',
-        categoria_id: 'publicidad',
-        descripcion: `Contrato Publicidad - Cliente: ${contrato.cliente} (Contado)`,
-        monto: contrato.valor_total,
-        origen: 'publicidad',
-        referencia_tipo: 'contrato_publicidad',
-        referencia_id: contrato.id,
-        anulado: false,
-        usuario_registro: usuario_id,
+        date: contract.created_at,
+        type: 'income',
+        category_id: 'advertising',
+        description: `Contrato Publicidad - Cliente: ${contract.client_name} (Cash)`,
+        amount: contract.total_amount,
+        origin: 'advertising',
+        reference_type: 'advertising_contract',
+        reference_id: contract.id,
+        is_annulled: false,
+        created_by: userId,
       };
-      data.movimientos.push(movimiento);
-      contrato.cuotas_pagadas = 1;
+      data.movements.push(movement);
+      contract.installments_paid = 1;
     }
-    this.addToSyncQueue('PUBLICIDAD_CONTRACT', { contrato, movimiento });
+    this.addToSyncQueue('PUBLICIDAD_CONTRACT', { contract, movement });
     this.saveData(data);
   },
 
   updatePanelStatus(panelId: string, status: PanelStatus) {
     const data = this.getData();
-    const panel = data.paneles.find(p => p.id === panelId);
+    const panel = data.panels.find(p => p.id === panelId);
     if (panel) {
-      const panelsToUpdate = panel.agrupacion_id
-        ? data.paneles.filter(p => p.agrupacion_id === panel.agrupacion_id)
+      const panelsToUpdate = panel.group_id
+        ? data.panels.filter(p => p.group_id === panel.group_id)
         : [panel];
 
       panelsToUpdate.forEach(p => {
-        p.estado = status;
-        if (status === 'disponible') {
-          p.contrato_id = undefined;
+        p.status = status;
+        if (status === 'available') {
+          p.contract_id = undefined;
         }
       });
       this.saveData(data);
@@ -335,53 +444,53 @@ export const StorageService = {
 
   associatePanels(ids: string[]) {
     const data = this.getData();
-    const group_id = crypto.randomUUID();
+    const groupId = crypto.randomUUID();
     ids.forEach(id => {
-      const p = data.paneles.find(panel => panel.id === id);
-      if (p) p.agrupacion_id = group_id;
+      const p = data.panels.find(panel => panel.id === id);
+      if (p) p.group_id = groupId;
     });
     this.saveData(data);
   },
 
-  disassociatePanels(group_id: string) {
+  disassociatePanels(groupId: string) {
     const data = this.getData();
-    data.paneles.forEach(p => {
-      if (p.agrupacion_id === group_id) {
-        delete p.agrupacion_id;
+    data.panels.forEach(p => {
+      if (p.group_id === groupId) {
+        delete p.group_id;
       }
     });
     this.saveData(data);
   },
 
-  registerPagoPublicidad(contrato_id: string, monto: number, usuario_id: string) {
+  registerAdvertisingPayment(contractId: string, amount: number, userId: string) {
     const data = this.getData();
-    const contrato = data.contratosPublicidad.find(c => c.id === contrato_id);
-    if (contrato) {
-      contrato.cuotas_pagadas++;
-      const movimiento: AccountingMovement = {
+    const contract = data.advertisingContracts.find(c => c.id === contractId);
+    if (contract) {
+      contract.installments_paid++;
+      const movement: AccountingMovement = {
         id: crypto.randomUUID(),
-        fecha: new Date().toISOString(),
-        tipo: 'ingreso',
-        categoria_id: 'publicidad',
-        descripcion: `Pago Publicidad - Cliente: ${contrato.cliente} (Cuota ${contrato.cuotas_pagadas})`,
-        monto: monto,
-        origen: 'publicidad',
-        referencia_tipo: 'contrato_publicidad',
-        referencia_id: contrato.id,
-        anulado: false,
-        usuario_registro: usuario_id,
+        date: new Date().toISOString(),
+        type: 'income',
+        category_id: 'advertising',
+        description: `Pago Publicidad - Cliente: ${contract.client_name} (Cuota ${contract.installments_paid})`,
+        amount: amount,
+        origin: 'advertising',
+        reference_type: 'advertising_contract',
+        reference_id: contract.id,
+        is_annulled: false,
+        created_by: userId,
       };
-      data.movimientos.push(movimiento);
-      this.addToSyncQueue('PUBLICIDAD_PAY', { contrato_id, monto, movimiento });
+      data.movements.push(movement);
+      this.addToSyncQueue('PUBLICIDAD_PAY', { contract_id: contractId, amount, movement });
       this.saveData(data);
     }
   },
 
-  getNextRecibo(año: number): string {
+  getNextReceipt(year: number): string {
     const data = this.getData();
-    if (!data.reciboCounter[año]) data.reciboCounter[año] = 0;
-    data.reciboCounter[año]++;
+    if (!data.receiptCounter[year]) data.receiptCounter[year] = 0;
+    data.receiptCounter[year]++;
     this.saveData(data);
-    return `${año}-${data.reciboCounter[año].toString().padStart(4, '0')}`;
+    return `${year}-${data.receiptCounter[year].toString().padStart(4, '0')}`;
   }
 };

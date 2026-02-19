@@ -5,20 +5,20 @@ import { Grid, CheckCircle2, Clock, User, Phone, DollarSign, X, BookmarkPlus, Ba
 import { StorageService } from '../services/storage';
 
 interface AdvertisingPanelsProps {
-  paneles: AdvertisingPanel[];
-  contratos: AdvertisingContract[];
-  valores: AdvertisingRate[];
+  panels: AdvertisingPanel[];
+  advertisingContracts: AdvertisingContract[];
+  advertisingRates: AdvertisingRate[];
   clubConfig: ClubConfig;
   userRole: UserRole;
-  onRegisterContract: (contrato: AdvertisingContract) => void;
-  onRegisterPayment: (contrato_id: string, monto: number) => void;
+  onRegisterContract: (contract: AdvertisingContract) => void;
+  onRegisterPayment: (contractId: string, amount: number) => void;
   onRefresh: () => void;
 }
 
 const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
-  paneles,
-  contratos,
-  valores,
+  panels,
+  advertisingContracts,
+  advertisingRates,
   clubConfig,
   userRole,
   onRegisterContract,
@@ -38,17 +38,17 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
 
   const getStatusColor = (status: PanelStatus) => {
     switch (status) {
-      case 'disponible': return 'bg-white border-slate-200 text-slate-400 hover:border-indigo-400';
-      case 'reservado': return 'bg-yellow-50 border-yellow-200 text-yellow-600';
-      case 'vendido': return 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-sm';
+      case 'available': return 'bg-white border-slate-200 text-slate-400 hover:border-indigo-400';
+      case 'reserved': return 'bg-yellow-50 border-yellow-200 text-yellow-600';
+      case 'sold': return 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-sm';
     }
   };
 
   const getStatusIcon = (status: PanelStatus) => {
     switch (status) {
-      case 'disponible': return null;
-      case 'reservado': return <Clock size={12} />;
-      case 'vendido': return <CheckCircle2 size={12} />;
+      case 'available': return null;
+      case 'reserved': return <Clock size={12} />;
+      case 'sold': return <CheckCircle2 size={12} />;
     }
   };
 
@@ -63,7 +63,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
 
   const toggleReservation = () => {
     if (!selectedPanel) return;
-    const newStatus: PanelStatus = selectedPanel.estado === 'reservado' ? 'disponible' : 'reservado';
+    const newStatus: PanelStatus = selectedPanel.status === 'reserved' ? 'available' : 'reserved';
     StorageService.updatePanelStatus(selectedPanel.id, newStatus);
     onRefresh();
     setShowForm(false);
@@ -71,24 +71,24 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
 
   const handleAssociate = (targetPanelNum: number) => {
     if (!selectedPanel) return;
-    if (isOneAndHalf(selectedPanel.numero_panel)) {
+    if (isOneAndHalf(selectedPanel.panel_number)) {
       alert("Los paneles de 1.5 ya tienen un tamaño especial y no pueden asociarse.");
       return;
     }
-    const target = paneles.find(p => p.numero_panel === targetPanelNum);
+    const target = panels.find(p => p.panel_number === targetPanelNum);
     if (!target) return;
-    if (isHidden(target.numero_panel)) {
-        const nextTarget = paneles.find(p => p.numero_panel === (targetPanelNum + (targetPanelNum > selectedPanel.numero_panel ? 1 : -1)));
-        if (nextTarget) handleAssociate(nextTarget.numero_panel);
+    if (isHidden(target.panel_number)) {
+        const nextTarget = panels.find(p => p.panel_number === (targetPanelNum + (targetPanelNum > selectedPanel.panel_number ? 1 : -1)));
+        if (nextTarget) handleAssociate(nextTarget.panel_number);
         return;
     }
-    if (target.estado !== 'disponible' || selectedPanel.estado !== 'disponible') {
+    if (target.status !== 'available' || selectedPanel.status !== 'available') {
       alert("Solo se pueden asociar paneles disponibles.");
       return;
     }
     const mergedIds = Array.from(new Set([
-        ...(selectedPanel.agrupacion_id ? paneles.filter(p => p.agrupacion_id === selectedPanel.agrupacion_id).map(p => p.id) : [selectedPanel.id]),
-        ...(target.agrupacion_id ? paneles.filter(p => p.agrupacion_id === target.agrupacion_id).map(p => p.id) : [target.id])
+        ...(selectedPanel.group_id ? panels.filter(p => p.group_id === selectedPanel.group_id).map(p => p.id) : [selectedPanel.id]),
+        ...(target.group_id ? panels.filter(p => p.group_id === target.group_id).map(p => p.id) : [target.id])
     ]));
     if (mergedIds.length > 3) {
       alert("No se pueden asociar más de 3 paneles.");
@@ -100,17 +100,17 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
   };
 
   const handleDisassociate = () => {
-    if (!selectedPanel || !selectedPanel.agrupacion_id) return;
-    StorageService.disassociatePanels(selectedPanel.agrupacion_id);
+    if (!selectedPanel || !selectedPanel.group_id) return;
+    StorageService.disassociatePanels(selectedPanel.group_id);
     onRefresh();
     setShowForm(false);
   };
 
-  const printContract = (contrato: AdvertisingContract) => {
-    const agente = clubConfig.agentes_cobranza.find(a => a.id === contrato.agente_cobranza_id);
-    const presi = clubConfig.presidente;
-    const panelNum = selectedPanel?.numero_panel || 0;
-    const contractDate = new Date(contrato.fecha_inicio);
+  const printContract = (contract: AdvertisingContract) => {
+    const collector = clubConfig.collectors.find(a => a.id === contract.collector_id);
+    const presi = clubConfig.president;
+    const panelNum = selectedPanel?.panel_number || 0;
+    const contractDate = new Date(contract.start_date);
     const dateStr = contractDate.toLocaleDateString();
 
     const getDueDate = (days: number) => {
@@ -119,16 +119,16 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
       return d.toLocaleDateString();
     };
 
-    const numCuotas = contrato.modalidad_pago === 'contado' ? 1 : parseInt(contrato.modalidad_pago);
-    const esContado = contrato.modalidad_pago === 'contado';
+    const numInstallments = contract.payment_method === 'cash' ? 1 : parseInt(contract.payment_method);
+    const isCash = contract.payment_method === 'cash';
 
     let paymentScheduleHTML = '';
-    if (esContado) {
-      paymentScheduleHTML = `<p><strong>Pago Único Contado:</strong> $${contrato.valor_total.toLocaleString()} - <strong>Vencimiento:</strong> Hoy (${dateStr})</p>`;
+    if (isCash) {
+      paymentScheduleHTML = `<p><strong>Pago Único Contado:</strong> $${contract.total_amount.toLocaleString()} - <strong>Vencimiento:</strong> Hoy (${dateStr})</p>`;
     } else {
       paymentScheduleHTML = '<ul>';
-      for (let i = 1; i <= numCuotas; i++) {
-        paymentScheduleHTML += `<li>Cuota ${i}: $${contrato.monto_cuota.toLocaleString()} - Vencimiento: ${getDueDate(i * 30)}</li>`;
+      for (let i = 1; i <= numInstallments; i++) {
+        paymentScheduleHTML += `<li>Cuota ${i}: $${contract.installment_amount.toLocaleString()} - Vencimiento: ${getDueDate(i * 30)}</li>`;
       }
       paymentScheduleHTML += '</ul>';
     }
@@ -154,10 +154,10 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
       </head>
       <body>
         <div class="title">CONTRATO DE LOCACION</div>
-        <p>En la ciudad de Chajari, Entre Ríos en fecha ${dateStr}, entre el CLUB 1 DE MAYO CUIT 30-67086212-3, representado por su presidente ${presi.nombre_apellido} D.N.I ${presi.dni}, con direccion ${presi.direccion}; en adelante EL CLUB, por una parte y ${contrato.cliente}, en adelante LA EMPRESA.</p>
+        <p>En la ciudad de Chajari, Entre Ríos en fecha ${dateStr}, entre el CLUB 1 DE MAYO CUIT 30-67086212-3, representado por su presidente ${presi.full_name} D.N.I ${presi.dni}, con direccion ${presi.address}; en adelante EL CLUB, por una parte y ${contract.client_name}, en adelante LA EMPRESA.</p>
         <div class="clause"><span class="clause-title">PRIMERA:</span> EL CLUB AUTORIZA A LA EMPRESA el uso de un espacio publicitario (Panel N° ${panelNum}) por el periodo de 1 (un) año.</div>
-        <div class="clause"><span class="clause-title">VENCIMIENTO:</span> El presente contrato tiene vigencia hasta el día <strong>${new Date(contrato.fecha_vencimiento).toLocaleDateString()}</strong>.</div>
-        <div class="clause"><span class="clause-title">QUINTA:</span> El PRECIO se estipula en $${contrato.valor_total.toLocaleString()}.</div>
+        <div class="clause"><span class="clause-title">VENCIMIENTO:</span> El presente contrato tiene vigencia hasta el día <strong>${new Date(contract.expiry_date).toLocaleDateString()}</strong>.</div>
+        <div class="clause"><span class="clause-title">QUINTA:</span> El PRECIO se estipula en $${contract.total_amount.toLocaleString()}.</div>
         <div class="signatures">
           <div class="signature-box">EL CLUB</div>
           <div class="signature-box">LA EMPRESA</div>
@@ -169,17 +169,17 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
     printWindow.print();
   };
 
-  const getFilteredVencimientos = () => {
+  const getFilteredExpirations = () => {
     const now = new Date();
     const nextMonth = new Date();
     nextMonth.setMonth(now.getMonth() + 1);
 
-    return contratos.filter(c => {
-      const expirationDate = new Date(c.fecha_vencimiento);
+    return advertisingContracts.filter(c => {
+      const expirationDate = new Date(c.expiry_date);
       const isExpired = expirationDate < now;
       const isSoon = expirationDate >= now && expirationDate <= nextMonth;
 
-      const matchSearch = c.cliente.toLowerCase().includes(searchClient.toLowerCase());
+      const matchSearch = c.client_name.toLowerCase().includes(searchClient.toLowerCase());
 
       let matchStatus = true;
       if (filterStatus === 'activos') matchStatus = !isExpired;
@@ -187,7 +187,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
       if (filterStatus === 'vencidos') matchStatus = isExpired;
 
       return matchSearch && matchStatus;
-    }).sort((a, b) => new Date(a.fecha_vencimiento).getTime() - new Date(b.fecha_vencimiento).getTime());
+    }).sort((a, b) => new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime());
   };
 
   const getExpirationStatus = (dateStr: string) => {
@@ -201,8 +201,8 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
     return { label: 'Vigente', color: 'text-emerald-600 bg-emerald-50', icon: <CheckCircle2 size={10} /> };
   };
 
-  const selectedContrato = selectedPanel?.contrato_id
-    ? contratos.find(c => c.id === selectedPanel.contrato_id)
+  const selectedContract = selectedPanel?.contract_id
+    ? advertisingContracts.find(c => c.id === selectedPanel.contract_id)
     : null;
 
   return (
@@ -239,9 +239,9 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
 
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
             <div className="grid grid-cols-24 gap-0 overflow-hidden rounded-lg">
-              {paneles.map((panel) => {
-                if (isHidden(panel.numero_panel)) return null;
-                const isSpecial = isOneAndHalf(panel.numero_panel);
+              {panels.map((panel) => {
+                if (isHidden(panel.panel_number)) return null;
+                const isSpecial = isOneAndHalf(panel.panel_number);
                 return (
                   <button
                     key={panel.id}
@@ -249,13 +249,13 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
                     style={{ gridColumn: isSpecial ? 'span 3' : 'span 2' }}
                     className={`
                       aspect-square flex flex-col items-center justify-center gap-1 transition-all relative
-                      ${getStatusColor(panel.estado)}
+                      ${getStatusColor(panel.status)}
                       ${isSpecial ? 'ring-2 ring-indigo-200 ring-inset bg-indigo-50/10' : ''}
-                      ${!panel.agrupacion_id ? 'border-[1px]' : ''}
+                      ${!panel.group_id ? 'border-[1px]' : ''}
                     `}
                   >
-                    <span className={`text-[10px] sm:text-xs font-bold`}>{panel.numero_panel}</span>
-                    {getStatusIcon(panel.estado)}
+                    <span className={`text-[10px] sm:text-xs font-bold`}>{panel.panel_number}</span>
+                    {getStatusIcon(panel.status)}
                   </button>
                 );
               })}
@@ -307,24 +307,24 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {getFilteredVencimientos().map(c => {
-                    const status = getExpirationStatus(c.fecha_vencimiento);
-                    const panel = paneles.find(p => p.id === c.panel_id);
+                  {getFilteredExpirations().map(c => {
+                    const status = getExpirationStatus(c.expiry_date);
+                    const panel = panels.find(p => p.id === c.panel_id);
                     return (
                       <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-slate-900">{c.cliente}</td>
+                        <td className="px-6 py-4 font-bold text-slate-900">{c.client_name}</td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">Panel #{panel?.numero_panel}</span>
-                            <span className="text-[10px] text-slate-400 uppercase font-bold">{c.tipo_panel.replace(/_/g, ' ')}</span>
+                            <span className="text-sm font-medium">Panel #{panel?.panel_number}</span>
+                            <span className="text-[10px] text-slate-400 uppercase font-bold">{c.panel_type.replace(/_/g, ' ')}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-xs font-medium text-slate-500">
-                          {new Date(c.fecha_inicio).toLocaleDateString()}
+                          {new Date(c.start_date).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`text-sm font-black ${status.label === 'Vencido' ? 'text-red-600' : 'text-slate-900'}`}>
-                            {new Date(c.fecha_vencimiento).toLocaleDateString()}
+                            {new Date(c.expiry_date).toLocaleDateString()}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -343,7 +343,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
                       </tr>
                     );
                   })}
-                  {getFilteredVencimientos().length === 0 && (
+                  {getFilteredExpirations().length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-6 py-20 text-center text-slate-400 font-bold italic">
                         No hay contratos que coincidan con la búsqueda.
@@ -363,7 +363,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
           <div className="relative bg-white rounded-[2rem] w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
             <div className="px-8 pt-8 pb-4 flex justify-between items-start bg-white rounded-t-[2rem] sticky top-0 z-10">
               <div>
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Panel #{selectedPanel.numero_panel}</h3>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Panel #{selectedPanel.panel_number}</h3>
                 <p className="text-slate-500 text-sm font-medium">Gestión de Espacio Publicitario</p>
               </div>
               <button onClick={() => setShowForm(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-900"><X size={24} /></button>
@@ -372,11 +372,11 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
             <div className="px-8 pb-8 overflow-y-auto custom-scrollbar flex-1">
               {viewState === 'choice' && (
                 <div className="space-y-4 pt-4">
-                  <button onClick={() => setViewState(selectedContrato ? 'details' : 'sell')} className="w-full p-6 bg-indigo-600 text-white font-bold rounded-2xl flex items-center gap-4 hover:bg-indigo-700 shadow-xl transition-all">
+                  <button onClick={() => setViewState(selectedContract ? 'details' : 'sell')} className="w-full p-6 bg-indigo-600 text-white font-bold rounded-2xl flex items-center gap-4 hover:bg-indigo-700 shadow-xl transition-all">
                     <div className="bg-white/20 p-3 rounded-xl"><DollarSign size={24} /></div>
-                    <div className="text-left"><p className="text-lg leading-none mb-1">Gestionar</p><p className="text-xs text-indigo-100/80 font-medium">{selectedContrato ? 'Ver Contrato / Registrar Cobro' : 'Realizar Venta o Reserva'}</p></div>
+                    <div className="text-left"><p className="text-lg leading-none mb-1">Gestionar</p><p className="text-xs text-indigo-100/80 font-medium">{selectedContract ? 'Ver Contrato / Registrar Cobro' : 'Realizar Venta o Reserva'}</p></div>
                   </button>
-                  {canManage && !selectedContrato && !isOneAndHalf(selectedPanel.numero_panel) && (
+                  {canManage && !selectedContract && !isOneAndHalf(selectedPanel.panel_number) && (
                     <button onClick={() => setViewState('associate')} className="w-full p-5 bg-blue-50 text-blue-700 font-bold rounded-2xl flex items-center justify-center gap-3 border border-blue-100 shadow-sm">
                       <LinkIcon size={20} /> Asociar Paneles Adyacentes
                     </button>
@@ -385,49 +385,49 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
                 </div>
               )}
 
-              {viewState === 'details' && selectedContrato && (
+              {viewState === 'details' && selectedContract && (
                 <div className="space-y-6 pt-4">
                   <div className="space-y-4">
                     <div className="flex items-center gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">
                       <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600"><User size={24} /></div>
                       <div>
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Información Cliente</p>
-                        <p className="font-black text-slate-900">{selectedContrato.cliente}</p>
-                        <p className="text-xs text-slate-500 font-medium">Inicio: {new Date(selectedContrato.fecha_inicio).toLocaleDateString()}</p>
-                        <p className="text-xs text-slate-500 font-medium">Vence: {new Date(selectedContrato.fecha_vencimiento).toLocaleDateString()}</p>
+                        <p className="font-black text-slate-900">{selectedContract.client_name}</p>
+                        <p className="text-xs text-slate-500 font-medium">Inicio: {new Date(selectedContract.start_date).toLocaleDateString()}</p>
+                        <p className="text-xs text-slate-500 font-medium">Vence: {new Date(selectedContract.expiry_date).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <div className="p-6 bg-indigo-600 rounded-[2rem] text-white shadow-xl shadow-indigo-200">
                       <p className="text-[10px] text-indigo-200 font-bold uppercase mb-1">Total a Cobrar</p>
-                      <p className="text-4xl font-black tracking-tighter">${selectedContrato.monto_cuota.toLocaleString()}</p>
-                      {selectedContrato.cuotas_pagadas < (selectedContrato.modalidad_pago === 'contado' ? 1 : Number(selectedContrato.modalidad_pago)) && (
-                        <button onClick={() => { onRegisterPayment(selectedContrato.id, selectedContrato.monto_cuota); setShowForm(false); }} className="mt-4 bg-white text-indigo-600 w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">Registrar Pago</button>
+                      <p className="text-4xl font-black tracking-tighter">${selectedContract.installment_amount.toLocaleString()}</p>
+                      {selectedContract.installments_paid < (selectedContract.payment_method === 'cash' ? 1 : Number(selectedContract.payment_method)) && (
+                        <button onClick={() => { onRegisterPayment(selectedContract.id, selectedContract.installment_amount); setShowForm(false); }} className="mt-4 bg-white text-indigo-600 w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">Registrar Pago</button>
                       )}
                     </div>
-                    <button onClick={() => printContract(selectedContrato)} className="w-full py-5 bg-slate-900 text-white rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest shadow-xl"><Printer size={18} /> Imprimir Contrato</button>
+                    <button onClick={() => printContract(selectedContract)} className="w-full py-5 bg-slate-900 text-white rounded-2xl flex items-center justify-center gap-3 font-black text-xs uppercase tracking-widest shadow-xl"><Printer size={18} /> Imprimir Contrato</button>
                   </div>
                 </div>
               )}
 
-              {viewState === 'sell' && !selectedContrato && (
+              {viewState === 'sell' && !selectedContract && (
                 <div className="pt-4">
                   <form
                     onSubmit={(e) => {
                         e.preventDefault();
                         const formData = new FormData(e.currentTarget);
                         const mod = formData.get('modalidad') as string;
-                        let type: PanelType = isOneAndHalf(selectedPanel.numero_panel) ? '1_5_panel' : '1_panel';
-                        const groupPanels = selectedPanel.agrupacion_id ? paneles.filter(p => p.agrupacion_id === selectedPanel.agrupacion_id) : [selectedPanel];
-                        if (groupPanels.length === 2) type = '2_paneles';
-                        if (groupPanels.length === 3) type = '3_paneles';
-                        const config = valores.find(v => v.tipo_panel === type);
-                        let total = 0; let cuota = 0;
+                        let type: PanelType = isOneAndHalf(selectedPanel.panel_number) ? '1_5_panel' : '1_panel';
+                        const groupPanels = selectedPanel.group_id ? panels.filter(p => p.group_id === selectedPanel.group_id) : [selectedPanel];
+                        if (groupPanels.length === 2) type = '2_panels';
+                        if (groupPanels.length === 3) type = '3_panels';
+                        const config = advertisingRates.find(v => v.panel_type === type);
+                        let total = 0; let installment = 0;
                         if (config) {
-                            if (mod === 'contado') total = config.valor_contado;
-                            else if (mod === '1') total = config.valor_1_cuota;
-                            else if (mod === '2') total = config.valor_2_cuotas;
-                            else if (mod === '3') total = config.valor_3_cuotas;
-                            cuota = mod === 'contado' ? total : (total / Number(mod));
+                            if (mod === 'cash') total = config.cash_price;
+                            else if (mod === '1') total = config.one_installment_price;
+                            else if (mod === '2') total = config.two_installments_price;
+                            else if (mod === '3') total = config.three_installments_price;
+                            installment = mod === 'cash' ? total : (total / Number(mod));
                         }
 
                         // CALCULO DE VENCIMIENTO basado en FECHA DE INICIO seleccionada
@@ -437,18 +437,18 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
                         expirationDate.setFullYear(startDate.getFullYear() + 1);
 
                         onRegisterContract({
-                            id: crypto.randomUUID(), año: new Date().getFullYear(),
-                            cliente: formData.get('cliente') as string,
-                            representante_legal: formData.get('representante') as string,
-                            dni_representante: formData.get('dni_rep') as string,
-                            telefono: formData.get('telefono') as string,
-                            direccion: formData.get('direccion') as string,
-                            agente_cobranza_id: formData.get('agente_cobranza') as string,
-                            panel_id: selectedPanel.id, tipo_panel: type, modalidad_pago: mod as any,
-                            valor_total: total, monto_cuota: cuota, cuotas_pagadas: 0,
+                            id: crypto.randomUUID(), year: new Date().getFullYear(),
+                            client_name: formData.get('cliente') as string,
+                            legal_representative: formData.get('representante') as string,
+                            representative_dni: formData.get('dni_rep') as string,
+                            phone: formData.get('telefono') as string,
+                            address: formData.get('address') as string,
+                            collector_id: formData.get('agente_cobranza') as string,
+                            panel_id: selectedPanel.id, panel_type: type, payment_method: mod as any,
+                            total_amount: total, installment_amount: installment, installments_paid: 0,
                             created_at: new Date().toISOString(),
-                            fecha_inicio: startDate.toISOString(),
-                            fecha_vencimiento: expirationDate.toISOString()
+                            start_date: startDate.toISOString(),
+                            expiry_date: expirationDate.toISOString()
                         });
                         setShowForm(false);
                     }}
@@ -474,7 +474,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
                       <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Modalidad *</label>
                         <select name="modalidad" required className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-sm">
-                          <option value="contado">Contado</option>
+                          <option value="cash">Contado</option>
                           <option value="1">1 Cuota</option>
                           <option value="2">2 Cuotas</option>
                           <option value="3">3 Cuotas</option>
@@ -483,7 +483,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
                       <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Cobrador *</label>
                         <select name="agente_cobranza" required className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm">
-                          {clubConfig.agentes_cobranza.map(a => (<option key={a.id} value={a.id}>{a.nombre_apellido}</option>))}
+                          {clubConfig.collectors.map(a => (<option key={a.id} value={a.id}>{a.full_name}</option>))}
                         </select>
                       </div>
                     </div>

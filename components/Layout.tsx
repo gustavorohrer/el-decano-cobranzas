@@ -17,7 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, roles: [UserRole.ADMIN_GENERAL, UserRole.TESORERO, UserRole.PRESIDENTE, UserRole.COBRADOR] },
-    { id: 'socios', label: 'Socios', icon: Users, roles: [UserRole.ADMIN_GENERAL, UserRole.TESORERO, UserRole.PRESIDENTE, UserRole.COBRADOR] },
+    { id: 'members', label: 'Socios', icon: Users, roles: [UserRole.ADMIN_GENERAL, UserRole.TESORERO, UserRole.PRESIDENTE, UserRole.COBRADOR] },
     { id: 'publicidad', label: 'Publicidad', icon: LayoutGrid, roles: [UserRole.ADMIN_GENERAL, UserRole.TESORERO, UserRole.PRESIDENTE, UserRole.COBRADOR] },
     { id: 'contabilidad', label: 'Contabilidad', icon: Wallet, roles: [UserRole.ADMIN_GENERAL, UserRole.TESORERO, UserRole.PRESIDENTE] },
     { id: 'reportes', label: 'Reportes', icon: BarChart3, roles: [UserRole.ADMIN_GENERAL, UserRole.TESORERO, UserRole.PRESIDENTE] },

@@ -13,10 +13,10 @@ export const MONTHS = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-export const CATEGORIES: MemberCategory[] = ['general', 'grupo_familiar'];
+export const CATEGORIES: MemberCategory[] = ['general', 'family_group'];
 
 export const INITIAL_PANELES = Array.from({ length: 72 }, (_, i) => ({
   id: `p-${i + 1}`,
-  numero_panel: i + 1,
-  estado: 'disponible' as PanelStatus,
+  panel_number: i + 1,
+  status: 'available' as PanelStatus,
 }));

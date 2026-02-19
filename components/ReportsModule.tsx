@@ -13,17 +13,17 @@ import { MONTHS } from '../constants';
 import * as XLSX from 'xlsx';
 
 interface ReportsModuleProps {
-  movimientos: AccountingMovement[];
-  socios: Member[];
-  contratos: AdvertisingContract[];
+  movements: AccountingMovement[];
+  members: Member[];
+  advertisingContracts: AdvertisingContract[];
 }
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, contratos }) => {
+const ReportsModule: React.FC<ReportsModuleProps> = ({ movements, members, advertisingContracts }) => {
   // Filtros de Estado
-  const [filterGroup, setFilterGroup] = React.useState<'all' | 'socios' | 'publicidad'>('all');
-  const [filterType, setFilterType] = React.useState<'all' | 'ingreso' | 'egreso'>('all');
+  const [filterGroup, setFilterGroup] = React.useState<'all' | 'members' | 'advertising'>('all');
+  const [filterType, setFilterType] = React.useState<'all' | 'income' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = React.useState<string>('all');
   const [startDate, setStartDate] = React.useState<string>('');
   const [endDate, setEndDate] = React.useState<string>('');
@@ -31,49 +31,49 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
 
   // Obtener categorías disponibles basadas en el grupo
   const getCategories = () => {
-    if (filterGroup === 'socios') {
+    if (filterGroup === 'members') {
       return [
-        { id: 'cuotas_socios', label: 'Cuotas Socios (Ingreso)' },
-        { id: 'libreria', label: 'Librería (Egreso)' },
-        { id: 'materiales', label: 'Materiales (Egreso)' },
-        { id: 'comisiones_socios', label: 'Comisiones Socios (Egreso)' },
-        { id: 'cierre_caja', label: 'Cierre de Caja (Egreso)' },
-        { id: 'otros', label: 'Otros (Egreso)' }
+        { id: 'membership_fees', label: 'Cuotas Socios (Ingreso)' },
+        { id: 'stationery', label: 'Librería (Egreso)' },
+        { id: 'materials', label: 'Materiales (Egreso)' },
+        { id: 'member_commissions', label: 'Comisiones Socios (Egreso)' },
+        { id: 'cash_closing', label: 'Cierre de Caja (Egreso)' },
+        { id: 'others', label: 'Otros (Egreso)' }
       ];
-    } else if (filterGroup === 'publicidad') {
+    } else if (filterGroup === 'advertising') {
       return [
-        { id: 'publicidad', label: 'Publicidad (Ingreso)' },
-        { id: 'pintado_cartel', label: 'Pintado Cartel (Egreso)' },
-        { id: 'blanqueo_cartel', label: 'Blanqueo Cartel (Egreso)' },
-        { id: 'pintura', label: 'Pintura (Egreso)' },
-        { id: 'comisiones_carteleria', label: 'Comisiones Cartelería (Egreso)' },
-        { id: 'cierre_caja', label: 'Cierre de Caja (Egreso)' },
-        { id: 'otros', label: 'Otros (Egreso)' }
+        { id: 'advertising', label: 'Publicidad (Ingreso)' },
+        { id: 'panel_painting', label: 'Pintado Cartel (Egreso)' },
+        { id: 'panel_whitewashing', label: 'Blanqueo Cartel (Egreso)' },
+        { id: 'paint', label: 'Pintura (Egreso)' },
+        { id: 'advertising_commissions', label: 'Comisiones Cartelería (Egreso)' },
+        { id: 'cash_closing', label: 'Cierre de Caja (Egreso)' },
+        { id: 'others', label: 'Otros (Egreso)' }
       ];
     }
     return []; // Para TOTAL no mostramos categorías específicas por ahora o sumamos todas
   };
 
   // Lógica de Filtrado de Datos
-  const filteredMovimientos = movimientos.filter(m => {
-    if (m.anulado) return false;
+  const filteredMovements = movements.filter(m => {
+    if (m.is_annulled) return false;
 
     // Filtro por Grupo
     if (filterGroup !== 'all') {
-      const isSocioRelated = m.origen === 'socios' || m.grupo_egreso === 'socios';
-      const isPublicidadRelated = m.origen === 'publicidad' || m.grupo_egreso === 'publicidad';
-      if (filterGroup === 'socios' && !isSocioRelated) return false;
-      if (filterGroup === 'publicidad' && !isPublicidadRelated) return false;
+      const isMemberRelated = m.origin === 'members' || m.expense_group === 'members';
+      const isAdvertisingRelated = m.origin === 'advertising' || m.expense_group === 'advertising';
+      if (filterGroup === 'members' && !isMemberRelated) return false;
+      if (filterGroup === 'advertising' && !isAdvertisingRelated) return false;
     }
 
     // Filtro por Tipo (Ingreso/Egreso)
-    if (filterType !== 'all' && m.tipo !== filterType) return false;
+    if (filterType !== 'all' && m.type !== filterType) return false;
 
     // Filtro por Categoría Específica
-    if (filterCategory !== 'all' && m.categoria_id !== filterCategory) return false;
+    if (filterCategory !== 'all' && m.category_id !== filterCategory) return false;
 
     // Filtro por Fecha
-    const mDate = new Date(m.fecha).getTime();
+    const mDate = new Date(m.date).getTime();
     if (startDate && mDate < new Date(startDate).getTime()) return false;
     if (endDate && mDate > new Date(endDate).setHours(23, 59, 59, 999)) return false;
 
@@ -81,22 +81,22 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
   });
 
   // Totales Filtrados
-  const totalIngresos = filteredMovimientos.filter(m => m.tipo === 'ingreso').reduce((acc, m) => acc + m.monto, 0);
-  const totalEgresos = filteredMovimientos.filter(m => m.tipo === 'egreso').reduce((acc, m) => acc + m.monto, 0);
-  const balance = totalIngresos - totalEgresos;
+  const totalIncome = filteredMovements.filter(m => m.type === 'income').reduce((acc, m) => acc + m.amount, 0);
+  const totalExpense = filteredMovements.filter(m => m.type === 'expense').reduce((acc, m) => acc + m.amount, 0);
+  const balance = totalIncome - totalExpense;
 
   // Datos para Gráfico de Área (Evolución)
   const areaChartData = MONTHS.map((month, index) => {
-    const mesIndex = index + 1;
+    const monthIndex = index + 1;
     const year = new Date().getFullYear(); // Simplificado al año actual o al año del startDate si existe
-    const mesMovs = filteredMovimientos.filter(m => {
-      const d = new Date(m.fecha);
-      return d.getMonth() + 1 === mesIndex;
+    const monthMovements = filteredMovements.filter(m => {
+      const d = new Date(m.date);
+      return d.getMonth() + 1 === monthIndex;
     });
     return {
       name: month.substring(0, 3),
-      ingresos: mesMovs.filter(m => m.tipo === 'ingreso').reduce((acc, m) => acc + m.monto, 0),
-      egresos: mesMovs.filter(m => m.tipo === 'egreso').reduce((acc, m) => acc + m.monto, 0),
+      income: monthMovements.filter(m => m.type === 'income').reduce((acc, m) => acc + m.amount, 0),
+      expense: monthMovements.filter(m => m.type === 'expense').reduce((acc, m) => acc + m.amount, 0),
     };
   });
 
@@ -109,13 +109,13 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
   };
 
   const exportToExcel = () => {
-    const data = filteredMovimientos.map(m => ({
-      Fecha: new Date(m.fecha).toLocaleDateString(),
-      Tipo: m.tipo.toUpperCase(),
-      Grupo: m.grupo_egreso || m.origen || 'N/A',
-      Categoría: m.categoria_id.replace(/_/g, ' '),
-      Descripción: m.descripcion,
-      Monto: m.monto,
+    const data = filteredMovements.map(m => ({
+      Fecha: new Date(m.date).toLocaleDateString(),
+      Tipo: m.type.toUpperCase(),
+      Grupo: m.expense_group || m.origin || 'N/A',
+      Categoría: m.category_id.replace(/_/g, ' '),
+      Descripción: m.description,
+      Monto: m.amount,
     }));
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -169,8 +169,8 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
                 className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-sm"
               >
                 <option value="all">TOTAL (Consolidado)</option>
-                <option value="socios">Socios</option>
-                <option value="publicidad">Publicidad</option>
+                <option value="members">Socios</option>
+                <option value="advertising">Publicidad</option>
               </select>
             </div>
 
@@ -183,8 +183,8 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
                 className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-sm"
               >
                 <option value="all">Ingresos y Egresos</option>
-                <option value="ingreso">Solo Ingresos</option>
-                <option value="egreso">Solo Egresos</option>
+                <option value="income">Solo Ingresos</option>
+                <option value="expense">Solo Egresos</option>
               </select>
             </div>
 
@@ -242,7 +242,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
              <TrendingUp size={120} />
           </div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Ingresos Filtrados</p>
-          <h3 className="text-4xl font-black text-emerald-600 tracking-tighter">${totalIngresos.toLocaleString()}</h3>
+          <h3 className="text-4xl font-black text-emerald-600 tracking-tighter">${totalIncome.toLocaleString()}</h3>
         </div>
 
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group">
@@ -250,7 +250,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
              <TrendingDown size={120} />
           </div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Egresos Filtrados</p>
-          <h3 className="text-4xl font-black text-red-600 tracking-tighter">${totalEgresos.toLocaleString()}</h3>
+          <h3 className="text-4xl font-black text-red-600 tracking-tighter">${totalExpense.toLocaleString()}</h3>
         </div>
 
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group bg-slate-50/50">
@@ -289,8 +289,8 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
               <Tooltip
                 contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
               />
-              <Area type="monotone" dataKey="ingresos" stroke="#10b981" strokeWidth={4} fill="url(#colorIng)" name="Ingresos" />
-              <Area type="monotone" dataKey="egresos" stroke="#ef4444" strokeWidth={4} fill="url(#colorEgr)" name="Egresos" />
+              <Area type="monotone" dataKey="income" stroke="#10b981" strokeWidth={4} fill="url(#colorIng)" name="Ingresos" />
+              <Area type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={4} fill="url(#colorEgr)" name="Egresos" />
               <Legend verticalAlign="top" align="right" iconType="circle" />
             </AreaChart>
           </ResponsiveContainer>
@@ -301,7 +301,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
       <div className="space-y-4">
         <div className="flex justify-between items-center px-2">
           <h3 className="text-lg font-black text-slate-900">Auditoría de Movimientos</h3>
-          <span className="text-[10px] font-black uppercase text-slate-400">Mostrando {filteredMovimientos.length} resultados</span>
+          <span className="text-[10px] font-black uppercase text-slate-400">Mostrando {filteredMovements.length} resultados</span>
         </div>
 
         <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
@@ -317,32 +317,32 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, cont
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredMovimientos.map((m) => (
+                {filteredMovements.map((m) => (
                   <tr key={m.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-slate-500">
-                      {new Date(m.fecha).toLocaleDateString()}
+                      {new Date(m.date).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full ${
-                        (m.origen === 'socios' || m.grupo_egreso === 'socios') ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'
+                        (m.origin === 'members' || m.expense_group === 'members') ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'
                       }`}>
-                        {m.grupo_egreso || m.origen}
+                        {m.expense_group || m.origin}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                        <span className="text-xs font-bold text-slate-700 capitalize">
-                         {m.categoria_id.replace(/_/g, ' ')}
+                         {m.category_id.replace(/_/g, ' ')}
                        </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600 font-medium">
-                      {m.descripcion}
+                      {m.description}
                     </td>
-                    <td className={`px-6 py-4 text-right font-black ${m.tipo === 'ingreso' ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {m.tipo === 'ingreso' ? '+' : '-'} ${m.monto.toLocaleString()}
+                    <td className={`px-6 py-4 text-right font-black ${m.type === 'income' ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {m.type === 'income' ? '+' : '-'} ${m.amount.toLocaleString()}
                     </td>
                   </tr>
                 ))}
-                {filteredMovimientos.length === 0 && (
+                {filteredMovements.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-6 py-20 text-center text-slate-400 font-bold">
                       No se encontraron movimientos para los filtros seleccionados.

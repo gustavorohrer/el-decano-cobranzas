@@ -1,6 +1,5 @@
 
 import { supabase } from './supabase';
-import { DataAdapter } from './dataAdapter';
 import { Member, MembershipRate } from '../types';
 
 export const MembersDao = {
@@ -18,7 +17,7 @@ export const MembersDao = {
       return [];
     }
 
-    return (data || []).map(DataAdapter.dbToMember);
+    return (data || []) as Member[];
   },
 
   /**
@@ -36,6 +35,6 @@ export const MembersDao = {
       return [];
     }
 
-    return (data || []).map(DataAdapter.dbToMembershipRate);
+    return (data || []) as MembershipRate[];
   }
 };

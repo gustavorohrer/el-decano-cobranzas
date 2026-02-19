@@ -6,50 +6,50 @@ import { AccountingMovement } from '../types';
 import { MONTHS } from '../constants';
 
 interface DashboardProps {
-  sociosCount: number;
-  movimientos: AccountingMovement[];
+  membersCount: number;
+  movements: AccountingMovement[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ sociosCount, movimientos }) => {
+const Dashboard: React.FC<DashboardProps> = ({ membersCount, movements }) => {
   const [showFilterModal, setShowFilterModal] = React.useState(false);
-  const [filterType, setFilterType] = React.useState<'all' | 'socios' | 'publicidad'>('all');
+  const [filterType, setFilterType] = React.useState<'all' | 'members' | 'advertising'>('all');
 
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
   const chartData = MONTHS.map((month, index) => {
-    const mesIndex = index + 1;
-    const mesMovs = movimientos.filter(m => {
-      const d = new Date(m.fecha);
-      return d.getMonth() + 1 === mesIndex && d.getFullYear() === currentYear && !m.anulado;
+    const monthIndex = index + 1;
+    const monthMovements = movements.filter(m => {
+      const d = new Date(m.date);
+      return d.getMonth() + 1 === monthIndex && d.getFullYear() === currentYear && !m.is_annulled;
     });
 
     return {
       name: month.substring(0, 3),
-      ingresos: mesMovs.filter(m => m.tipo === 'ingreso').reduce((acc, m) => acc + m.monto, 0),
-      egresos: mesMovs.filter(m => m.tipo === 'egreso').reduce((acc, m) => acc + m.monto, 0),
+      income: monthMovements.filter(m => m.type === 'income').reduce((acc, m) => acc + m.amount, 0),
+      expense: monthMovements.filter(m => m.type === 'expense').reduce((acc, m) => acc + m.amount, 0),
     };
   });
 
-  const totalIngresos = movimientos.filter(m => m.tipo === 'ingreso' && !m.anulado).reduce((acc, m) => acc + m.monto, 0);
-  const totalEgresos = movimientos.filter(m => m.tipo === 'egreso' && !m.anulado).reduce((acc, m) => acc + m.monto, 0);
-  const balance = totalIngresos - totalEgresos;
+  const totalIncome = movements.filter(m => m.type === 'income' && !m.is_annulled).reduce((acc, m) => acc + m.amount, 0);
+  const totalExpense = movements.filter(m => m.type === 'expense' && !m.is_annulled).reduce((acc, m) => acc + m.amount, 0);
+  const balance = totalIncome - totalExpense;
 
-  const currentMonthIngresos = movimientos.filter(m => {
-    const d = new Date(m.fecha);
-    return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear && m.tipo === 'ingreso' && !m.anulado;
+  const currentMonthIncome = movements.filter(m => {
+    const d = new Date(m.date);
+    return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear && m.type === 'income' && !m.is_annulled;
   });
 
-  const filteredIngresos = filterType === 'all'
-    ? currentMonthIngresos
-    : currentMonthIngresos.filter(m => m.origen === filterType);
+  const filteredIncome = filterType === 'all'
+    ? currentMonthIncome
+    : currentMonthIncome.filter(m => m.origin === filterType);
 
-  const totalFiltered = filteredIngresos.reduce((acc, m) => acc + m.monto, 0);
+  const totalFiltered = filteredIncome.reduce((acc, m) => acc + m.amount, 0);
 
   const stats = [
-    { label: 'Socios Activos', value: sociosCount, icon: Users, color: 'bg-emerald-600', onClick: null },
+    { label: 'Socios Activos', value: membersCount, icon: Users, color: 'bg-emerald-600', onClick: null },
     { label: 'Ingresos del Mes', value: `$${totalFiltered.toLocaleString()}`, icon: DollarSign, color: 'bg-green-600', onClick: () => setShowFilterModal(true) },
-    { label: 'Gastos del Mes', value: `$${(chartData[currentMonth - 1]?.egresos || 0).toLocaleString()}`, icon: Wallet, color: 'bg-red-500', onClick: null },
+    { label: 'Gastos del Mes', value: `$${(chartData[currentMonth - 1]?.expense || 0).toLocaleString()}`, icon: Wallet, color: 'bg-red-500', onClick: null },
     { label: 'Balance Total', value: `$${balance.toLocaleString()}`, icon: TrendingUp, color: 'bg-teal-600', onClick: null },
   ];
 
@@ -85,8 +85,8 @@ const Dashboard: React.FC<DashboardProps> = ({ sociosCount, movimientos }) => {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(v) => `$${v}`} />
                 <Tooltip />
-                <Bar dataKey="ingresos" fill="#047857" radius={[4, 4, 0, 0]} name="Ingresos" />
-                <Bar dataKey="egresos" fill="#ef4444" radius={[4, 4, 0, 0]} name="Egresos" />
+                <Bar dataKey="income" fill="#047857" radius={[4, 4, 0, 0]} name="Ingresos" />
+                <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} name="Egresos" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -101,7 +101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sociosCount, movimientos }) => {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(v) => `$${v}`} />
                 <Tooltip />
-                <Line type="monotone" dataKey="ingresos" stroke="#059669" strokeWidth={3} dot={{r: 4}} name="Ingresos" />
+                <Line type="monotone" dataKey="income" stroke="#059669" strokeWidth={3} dot={{r: 4}} name="Ingresos" />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -124,15 +124,15 @@ const Dashboard: React.FC<DashboardProps> = ({ sociosCount, movimientos }) => {
                 <p className="text-sm text-slate-500">Muestra el total recaudado en el mes.</p>
               </button>
               <button
-                onClick={() => setFilterType('socios')}
-                className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${filterType === 'socios' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
+                onClick={() => setFilterType('members')}
+                className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${filterType === 'members' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
               >
                 <p className="font-bold text-emerald-900">Solo Socios</p>
                 <p className="text-sm text-slate-500">Muestra solo lo recaudado por cuotas sociales.</p>
               </button>
               <button
-                onClick={() => setFilterType('publicidad')}
-                className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${filterType === 'publicidad' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
+                onClick={() => setFilterType('advertising')}
+                className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${filterType === 'advertising' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
               >
                 <p className="font-bold text-emerald-900">Solo Publicidad</p>
                 <p className="text-sm text-slate-500">Muestra solo lo recaudado por cartelería.</p>
