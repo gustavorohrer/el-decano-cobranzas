@@ -2,12 +2,12 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Users, DollarSign, Wallet, TrendingUp, X, Filter } from 'lucide-react';
-import { MovimientoContable } from '../types';
+import { AccountingMovement } from '../types';
 import { MONTHS } from '../constants';
 
 interface DashboardProps {
   sociosCount: number;
-  movimientos: MovimientoContable[];
+  movimientos: AccountingMovement[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ sociosCount, movimientos }) => {
@@ -40,8 +40,8 @@ const Dashboard: React.FC<DashboardProps> = ({ sociosCount, movimientos }) => {
     return d.getMonth() + 1 === currentMonth && d.getFullYear() === currentYear && m.tipo === 'ingreso' && !m.anulado;
   });
 
-  const filteredIngresos = filterType === 'all' 
-    ? currentMonthIngresos 
+  const filteredIngresos = filterType === 'all'
+    ? currentMonthIngresos
     : currentMonthIngresos.filter(m => m.origen === filterType);
 
   const totalFiltered = filteredIngresos.reduce((acc, m) => acc + m.monto, 0);
@@ -57,8 +57,8 @@ const Dashboard: React.FC<DashboardProps> = ({ sociosCount, movimientos }) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
-          <button 
-            key={i} 
+          <button
+            key={i}
             onClick={stat.onClick ? stat.onClick : undefined}
             className={`bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-emerald-100 flex items-center gap-4 text-left transition-all ${stat.onClick ? 'hover:shadow-md hover:border-green-300 cursor-pointer' : ''}`}
           >
@@ -116,21 +116,21 @@ const Dashboard: React.FC<DashboardProps> = ({ sociosCount, movimientos }) => {
               <button onClick={() => setShowFilterModal(false)} className="p-2 hover:bg-emerald-50 rounded-full transition-colors"><X size={20} className="text-slate-400" /></button>
             </div>
             <div className="space-y-4">
-              <button 
+              <button
                 onClick={() => setFilterType('all')}
                 className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${filterType === 'all' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
               >
                 <p className="font-bold text-emerald-900">Todos los Ingresos</p>
                 <p className="text-sm text-slate-500">Muestra el total recaudado en el mes.</p>
               </button>
-              <button 
+              <button
                 onClick={() => setFilterType('socios')}
                 className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${filterType === 'socios' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
               >
                 <p className="font-bold text-emerald-900">Solo Socios</p>
                 <p className="text-sm text-slate-500">Muestra solo lo recaudado por cuotas sociales.</p>
               </button>
-              <button 
+              <button
                 onClick={() => setFilterType('publicidad')}
                 className={`w-full p-4 rounded-2xl border-2 text-left transition-all ${filterType === 'publicidad' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}
               >

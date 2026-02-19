@@ -1,26 +1,26 @@
 
 import React from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend, AreaChart, Area 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, AreaChart, Area
 } from 'recharts';
-import { 
-  FileText, Download, TrendingUp, TrendingDown, 
+import {
+  FileText, Download, TrendingUp, TrendingDown,
   PieChart as PieIcon, BarChart3, Filter, Calendar, X, Search, ArrowUpDown, ChevronDown, ListFilter, Trash2
 } from 'lucide-react';
-import { MovimientoContable, Socio, ContratoPublicidad } from '../types';
+import { AccountingMovement, Member, AdvertisingContract } from '../types';
 import { MONTHS } from '../constants';
 import * as XLSX from 'xlsx';
 
-interface ReportesModuleProps {
-  movimientos: MovimientoContable[];
-  socios: Socio[];
-  contratos: ContratoPublicidad[];
+interface ReportsModuleProps {
+  movimientos: AccountingMovement[];
+  socios: Member[];
+  contratos: AdvertisingContract[];
 }
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, contratos }) => {
+const ReportsModule: React.FC<ReportsModuleProps> = ({ movimientos, socios, contratos }) => {
   // Filtros de Estado
   const [filterGroup, setFilterGroup] = React.useState<'all' | 'socios' | 'publicidad'>('all');
   const [filterType, setFilterType] = React.useState<'all' | 'ingreso' | 'egreso'>('all');
@@ -137,15 +137,15 @@ const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, co
           <p className="text-slate-500 font-medium">Filtros dinámicos y análisis de movimientos</p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={() => setShowFilters(!showFilters)}
             className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 font-bold text-sm ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200'}`}
           >
             <Filter size={18} />
             {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
           </button>
-          <button 
-            onClick={exportToExcel} 
+          <button
+            onClick={exportToExcel}
             className="bg-slate-900 text-white px-5 py-3 rounded-xl flex items-center gap-2 font-black text-xs uppercase tracking-widest shadow-xl hover:-translate-y-1 transition-all"
           >
             <Download size={18} /> Exportar Selección
@@ -160,8 +160,8 @@ const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, co
             {/* Grupo Principal */}
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Grupo Principal</label>
-              <select 
-                value={filterGroup} 
+              <select
+                value={filterGroup}
                 onChange={(e) => {
                   setFilterGroup(e.target.value as any);
                   setFilterCategory('all'); // Reset categoria al cambiar grupo
@@ -177,8 +177,8 @@ const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, co
             {/* Tipo de Movimiento */}
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tipo Movimiento</label>
-              <select 
-                value={filterType} 
+              <select
+                value={filterType}
                 onChange={(e) => setFilterType(e.target.value as any)}
                 className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-sm"
               >
@@ -191,8 +191,8 @@ const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, co
             {/* Categoría Dinámica */}
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Categoría Específica</label>
-              <select 
-                value={filterCategory} 
+              <select
+                value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
                 disabled={filterGroup === 'all'}
                 className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 font-bold text-sm disabled:opacity-40"
@@ -208,24 +208,24 @@ const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, co
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Rango de Fecha</label>
               <div className="grid grid-cols-2 gap-2">
-                <input 
-                  type="date" 
-                  value={startDate} 
+                <input
+                  type="date"
+                  value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none"
                 />
-                <input 
-                  type="date" 
-                  value={endDate} 
+                <input
+                  type="date"
+                  value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none"
                 />
               </div>
             </div>
           </div>
-          
+
           <div className="mt-6 flex justify-end">
-            <button 
+            <button
               onClick={resetFilters}
               className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2 hover:bg-red-50 px-4 py-2 rounded-xl transition-all"
             >
@@ -286,7 +286,7 @@ const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, co
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 'bold', fill: '#94a3b8'}} />
               <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} tickFormatter={(v) => `$${v/1000}k`} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
               />
               <Area type="monotone" dataKey="ingresos" stroke="#10b981" strokeWidth={4} fill="url(#colorIng)" name="Ingresos" />
@@ -303,7 +303,7 @@ const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, co
           <h3 className="text-lg font-black text-slate-900">Auditoría de Movimientos</h3>
           <span className="text-[10px] font-black uppercase text-slate-400">Mostrando {filteredMovimientos.length} resultados</span>
         </div>
-        
+
         <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -358,4 +358,4 @@ const ReportesModule: React.FC<ReportesModuleProps> = ({ movimientos, socios, co
   );
 };
 
-export default ReportesModule;
+export default ReportsModule;

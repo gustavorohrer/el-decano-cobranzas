@@ -1,35 +1,35 @@
 
 import React from 'react';
-import { PanelPublicidad, PanelStatus, UserRole, ContratoPublicidad, PublicidadValorConfig, PanelType, ClubConfig } from '../types';
+import { AdvertisingPanel, PanelStatus, UserRole, AdvertisingContract, AdvertisingRate, PanelType, ClubConfig } from '../types';
 import { Grid, CheckCircle2, Clock, User, Phone, DollarSign, X, BookmarkPlus, Ban, ArrowLeft, Layers, Link as LinkIcon, Unlink, Info, FileText, Printer, Calendar, Search, Filter, AlertTriangle } from 'lucide-react';
 import { StorageService } from '../services/storage';
 
-interface PublicidadPanelesProps {
-  paneles: PanelPublicidad[];
-  contratos: ContratoPublicidad[];
-  valores: PublicidadValorConfig[];
+interface AdvertisingPanelsProps {
+  paneles: AdvertisingPanel[];
+  contratos: AdvertisingContract[];
+  valores: AdvertisingRate[];
   clubConfig: ClubConfig;
   userRole: UserRole;
-  onRegisterContract: (contrato: ContratoPublicidad) => void;
+  onRegisterContract: (contrato: AdvertisingContract) => void;
   onRegisterPayment: (contrato_id: string, monto: number) => void;
   onRefresh: () => void;
 }
 
-const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({ 
-  paneles, 
-  contratos, 
-  valores, 
+const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
+  paneles,
+  contratos,
+  valores,
   clubConfig,
-  userRole, 
+  userRole,
   onRegisterContract,
   onRegisterPayment,
   onRefresh
 }) => {
-  const [selectedPanel, setSelectedPanel] = React.useState<PanelPublicidad | null>(null);
+  const [selectedPanel, setSelectedPanel] = React.useState<AdvertisingPanel | null>(null);
   const [showForm, setShowForm] = React.useState(false);
   const [viewState, setViewState] = React.useState<'choice' | 'details' | 'sell' | 'associate'>('choice');
   const [activeTab, setActiveTab] = React.useState<'mapa' | 'vencimientos'>('mapa');
-  
+
   // Estados para filtros de vencimientos
   const [searchClient, setSearchClient] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<'todos' | 'activos' | 'proximos' | 'vencidos'>('todos');
@@ -55,7 +55,7 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
   const isOneAndHalf = (num: number) => num === 51 || num === 53;
   const isHidden = (num: number) => num === 52;
 
-  const handlePanelClick = (panel: PanelPublicidad) => {
+  const handlePanelClick = (panel: AdvertisingPanel) => {
     setSelectedPanel(panel);
     setViewState('choice');
     setShowForm(true);
@@ -106,7 +106,7 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
     setShowForm(false);
   };
 
-  const printContract = (contrato: ContratoPublicidad) => {
+  const printContract = (contrato: AdvertisingContract) => {
     const agente = clubConfig.agentes_cobranza.find(a => a.id === contrato.agente_cobranza_id);
     const presi = clubConfig.presidente;
     const panelNum = selectedPanel?.numero_panel || 0;
@@ -135,7 +135,7 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-    
+
     printWindow.document.write(`
       <html>
       <head>
@@ -178,9 +178,9 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
       const expirationDate = new Date(c.fecha_vencimiento);
       const isExpired = expirationDate < now;
       const isSoon = expirationDate >= now && expirationDate <= nextMonth;
-      
+
       const matchSearch = c.cliente.toLowerCase().includes(searchClient.toLowerCase());
-      
+
       let matchStatus = true;
       if (filterStatus === 'activos') matchStatus = !isExpired;
       if (filterStatus === 'proximos') matchStatus = isSoon;
@@ -201,21 +201,21 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
     return { label: 'Vigente', color: 'text-emerald-600 bg-emerald-50', icon: <CheckCircle2 size={10} /> };
   };
 
-  const selectedContrato = selectedPanel?.contrato_id 
-    ? contratos.find(c => c.id === selectedPanel.contrato_id) 
+  const selectedContrato = selectedPanel?.contrato_id
+    ? contratos.find(c => c.id === selectedPanel.contrato_id)
     : null;
 
   return (
     <div className="space-y-6">
       {/* Tabs */}
       <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
-        <button 
+        <button
           onClick={() => setActiveTab('mapa')}
           className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'mapa' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
         >
           Mapa de Paneles
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('vencimientos')}
           className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'vencimientos' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
         >
@@ -272,15 +272,15 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Buscar cliente..." 
+                <input
+                  type="text"
+                  placeholder="Buscar cliente..."
                   className="pl-10 pr-4 py-2 bg-white border rounded-xl outline-none text-sm w-full sm:w-48"
                   value={searchClient}
                   onChange={(e) => setSearchClient(e.target.value)}
                 />
               </div>
-              <select 
+              <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
                 className="px-4 py-2 bg-white border rounded-xl outline-none text-sm font-bold"
@@ -333,7 +333,7 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <button 
+                          <button
                             onClick={() => { setSelectedPanel(panel || null); setViewState('details'); setShowForm(true); }}
                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
                           >
@@ -411,7 +411,7 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
 
               {viewState === 'sell' && !selectedContrato && (
                 <div className="pt-4">
-                  <form 
+                  <form
                     onSubmit={(e) => {
                         e.preventDefault();
                         const formData = new FormData(e.currentTarget);
@@ -429,7 +429,7 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
                             else if (mod === '3') total = config.valor_3_cuotas;
                             cuota = mod === 'contado' ? total : (total / Number(mod));
                         }
-                        
+
                         // CALCULO DE VENCIMIENTO basado en FECHA DE INICIO seleccionada
                         const startDateVal = formData.get('fecha_inicio') as string;
                         const startDate = new Date(startDateVal);
@@ -445,7 +445,7 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
                             direccion: formData.get('direccion') as string,
                             agente_cobranza_id: formData.get('agente_cobranza') as string,
                             panel_id: selectedPanel.id, tipo_panel: type, modalidad_pago: mod as any,
-                            valor_total: total, monto_cuota: cuota, cuotas_pagadas: 0, 
+                            valor_total: total, monto_cuota: cuota, cuotas_pagadas: 0,
                             created_at: new Date().toISOString(),
                             fecha_inicio: startDate.toISOString(),
                             fecha_vencimiento: expirationDate.toISOString()
@@ -461,12 +461,12 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
 
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Fecha de Inicio de Contrato *</label>
-                      <input 
-                        name="fecha_inicio" 
-                        type="date" 
-                        required 
-                        defaultValue={new Date().toISOString().split('T')[0]} 
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold" 
+                      <input
+                        name="fecha_inicio"
+                        type="date"
+                        required
+                        defaultValue={new Date().toISOString().split('T')[0]}
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold"
                       />
                     </div>
 
@@ -502,4 +502,4 @@ const PublicidadPaneles: React.FC<PublicidadPanelesProps> = ({
   );
 };
 
-export default PublicidadPaneles;
+export default AdvertisingPanels;

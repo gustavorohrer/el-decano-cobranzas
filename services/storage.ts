@@ -1,18 +1,18 @@
 
-import { Socio, PagoSocio, MovimientoContable, CuotaConfig, PanelPublicidad, User, UserRole, PublicidadValorConfig, ContratoPublicidad, PanelType, PanelStatus, ClubConfig, SyncTask, AgenteCobranza } from '../types';
+import { Member, MemberPayment, AccountingMovement, MembershipRate, AdvertisingPanel, User, UserRole, AdvertisingRate, AdvertisingContract, PanelType, PanelStatus, ClubConfig, SyncTask, Collector } from '../types';
 
 const STORAGE_KEY = 'club_barrio_data';
 const SESSION_KEY = 'club_barrio_session';
 
 interface StorageData {
   users: User[];
-  socios: Socio[];
-  pagos: PagoSocio[];
-  movimientos: MovimientoContable[];
-  cuotasConfig: CuotaConfig[];
-  paneles: PanelPublicidad[];
-  contratosPublicidad: ContratoPublicidad[];
-  publicidadValores: PublicidadValorConfig[];
+  socios: Member[];
+  pagos: MemberPayment[];
+  movimientos: AccountingMovement[];
+  cuotasConfig: MembershipRate[];
+  paneles: AdvertisingPanel[];
+  contratosPublicidad: AdvertisingContract[];
+  publicidadValores: AdvertisingRate[];
   clubConfig: ClubConfig;
   reciboCounter: { [año: number]: number };
   syncQueue: SyncTask[];
@@ -54,7 +54,7 @@ export const StorageService = {
   getData(): StorageData {
     const data = localStorage.getItem(STORAGE_KEY);
     const parsed = data ? JSON.parse(data) : INITIAL_DATA;
-    
+
     if (parsed.users && !parsed.users.find((u: User) => u.email === 'Agalli33@hotmail.com')) {
       parsed.users.push({ id: 'admin-tony', email: 'Agalli33@hotmail.com', password: 'Tony1433', role: UserRole.ADMIN_GENERAL, active: true });
       this.saveData(parsed);
@@ -156,7 +156,7 @@ export const StorageService = {
     this.saveData(data);
   },
 
-  addAgente(agente: AgenteCobranza) {
+  addAgente(agente: Collector) {
     const data = this.getData();
     data.clubConfig.agentes_cobranza.push(agente);
     this.saveData(data);
@@ -168,14 +168,14 @@ export const StorageService = {
     this.saveData(data);
   },
 
-  addSocio(socio: Socio) {
+  addSocio(socio: Member) {
     const data = this.getData();
     data.socios.push(socio);
     this.addToSyncQueue('SOCIO_CREATE', socio);
     this.saveData(data);
   },
 
-  importSocios(newSocios: Socio[]) {
+  importSocios(newSocios: Member[]) {
     const data = this.getData();
     data.socios = [...data.socios, ...newSocios];
     newSocios.forEach(s => this.addToSyncQueue('SOCIO_CREATE', s));
@@ -191,7 +191,7 @@ export const StorageService = {
     }
   },
 
-  updatePublicidadConfig(id: string, field: keyof PublicidadValorConfig, valor: number) {
+  updatePublicidadConfig(id: string, field: keyof AdvertisingRate, valor: number) {
     const data = this.getData();
     const config = data.publicidadValores.find(c => c.id === id);
     if (config) {
@@ -200,7 +200,7 @@ export const StorageService = {
     }
   },
 
-  addMovimiento(movimiento: MovimientoContable) {
+  addMovimiento(movimiento: AccountingMovement) {
     const data = this.getData();
     data.movimientos.push(movimiento);
     if (movimiento.tipo === 'egreso') {
@@ -209,17 +209,17 @@ export const StorageService = {
     this.saveData(data);
   },
 
-  updateMovimiento(id: string, updates: Partial<MovimientoContable>) {
+  updateMovimiento(id: string, updates: Partial<AccountingMovement>) {
     const data = this.getData();
     const index = data.movimientos.findIndex(m => m.id === id);
     if (index !== -1) {
       data.movimientos[index] = { ...data.movimientos[index], ...updates };
-      
+
       if (data.movimientos[index].referencia_tipo === 'pago_socio' && updates.monto !== undefined) {
         const pago = data.pagos.find(p => p.id === data.movimientos[index].referencia_id);
         if (pago) pago.monto = updates.monto;
       }
-      
+
       this.saveData(data);
     }
   },
@@ -227,7 +227,7 @@ export const StorageService = {
   deleteMovimiento(id: string) {
     const data = this.getData();
     const mov = data.movimientos.find(m => m.id === id);
-    
+
     if (mov) {
       if (mov.referencia_tipo === 'pago_socio') {
         data.pagos = data.pagos.filter(p => p.id !== mov.referencia_id);
@@ -237,17 +237,17 @@ export const StorageService = {
           contrato.cuotas_pagadas = Math.max(0, contrato.cuotas_pagadas - 1);
         }
       }
-      
+
       data.movimientos = data.movimientos.filter(m => m.id !== id);
       this.saveData(data);
     }
   },
 
-  registerPago(pago: PagoSocio) {
+  registerPago(pago: MemberPayment) {
     const data = this.getData();
     data.pagos.push(pago);
-    
-    const movimiento: MovimientoContable = {
+
+    const movimiento: AccountingMovement = {
       id: crypto.randomUUID(),
       fecha: pago.fecha_pago,
       tipo: 'ingreso',
@@ -276,11 +276,11 @@ export const StorageService = {
     }
   },
 
-  addContratoPublicidad(contrato: ContratoPublicidad, usuario_id: string) {
+  addContratoPublicidad(contrato: AdvertisingContract, usuario_id: string) {
     const data = this.getData();
     data.contratosPublicidad.push(contrato);
     const panel = data.paneles.find(p => p.id === contrato.panel_id);
-    let movimiento: MovimientoContable | null = null;
+    let movimiento: AccountingMovement | null = null;
 
     if (panel) {
       panel.estado = 'vendido';
@@ -319,7 +319,7 @@ export const StorageService = {
     const data = this.getData();
     const panel = data.paneles.find(p => p.id === panelId);
     if (panel) {
-      const panelsToUpdate = panel.agrupacion_id 
+      const panelsToUpdate = panel.agrupacion_id
         ? data.paneles.filter(p => p.agrupacion_id === panel.agrupacion_id)
         : [panel];
 
@@ -358,7 +358,7 @@ export const StorageService = {
     const contrato = data.contratosPublicidad.find(c => c.id === contrato_id);
     if (contrato) {
       contrato.cuotas_pagadas++;
-      const movimiento: MovimientoContable = {
+      const movimiento: AccountingMovement = {
         id: crypto.randomUUID(),
         fecha: new Date().toISOString(),
         tipo: 'ingreso',

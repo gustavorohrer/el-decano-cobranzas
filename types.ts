@@ -6,9 +6,9 @@ export enum UserRole {
   COBRADOR = 'COBRADOR'
 }
 
-export type SocioCategory = 'general' | 'grupo_familiar';
+export type MemberCategory = 'general' | 'grupo_familiar';
 
-export interface Socio {
+export interface Member {
   id: string;
   numero_socio: string;
   nombre: string;
@@ -16,19 +16,19 @@ export interface Socio {
   dni: string;
   telefono: string;
   direccion: string;
-  categoria: SocioCategory;
+  categoria: MemberCategory;
   created_at: string;
 }
 
-export interface CuotaConfig {
+export interface MembershipRate {
   id: string;
   año: number;
   mes: number;
-  categoria: SocioCategory;
+  categoria: MemberCategory;
   valor: number;
 }
 
-export interface PagoSocio {
+export interface MemberPayment {
   id: string;
   socio_id: string;
   año: number;
@@ -43,7 +43,7 @@ export interface PagoSocio {
 export type PanelStatus = 'disponible' | 'reservado' | 'vendido';
 export type PanelType = '1_panel' | '1_5_panel' | '2_paneles' | '3_paneles';
 
-export interface PanelPublicidad {
+export interface AdvertisingPanel {
   id: string;
   numero_panel: number;
   estado: PanelStatus;
@@ -51,7 +51,7 @@ export interface PanelPublicidad {
   contrato_id?: string;
 }
 
-export interface ContratoPublicidad {
+export interface AdvertisingContract {
   id: string;
   año: number;
   cliente: string;
@@ -68,10 +68,10 @@ export interface ContratoPublicidad {
   agente_cobranza_id?: string;
   created_at: string;
   fecha_inicio: string; // Nuevo campo
-  fecha_vencimiento: string; 
+  fecha_vencimiento: string;
 }
 
-export interface PublicidadValorConfig {
+export interface AdvertisingRate {
   id: string;
   año: number;
   tipo_panel: PanelType;
@@ -81,7 +81,7 @@ export interface PublicidadValorConfig {
   valor_3_cuotas: number;
 }
 
-export interface MovimientoContable {
+export interface AccountingMovement {
   id: string;
   fecha: string;
   tipo: 'ingreso' | 'egreso';
@@ -104,7 +104,7 @@ export interface User {
   active: boolean;
 }
 
-export interface AgenteCobranza {
+export interface Collector {
   id: string;
   nombre_apellido: string;
   dni: string;
@@ -117,7 +117,7 @@ export interface ClubConfig {
     estado_civil: string;
     direccion: string;
   };
-  agentes_cobranza: AgenteCobranza[];
+  agentes_cobranza: Collector[];
 }
 
 // Nueva interfaz para tareas de sincronización
@@ -130,13 +130,13 @@ export interface SyncTask {
 
 export interface AppState {
   user: User | null;
-  socios: Socio[];
-  pagos: PagoSocio[];
-  movimientos: MovimientoContable[];
-  cuotasConfig: CuotaConfig[];
-  paneles: PanelPublicidad[];
-  contratosPublicidad: ContratoPublicidad[];
-  publicidadValores: PublicidadValorConfig[];
+  socios: Member[];
+  pagos: MemberPayment[];
+  movimientos: AccountingMovement[];
+  cuotasConfig: MembershipRate[];
+  paneles: AdvertisingPanel[];
+  contratosPublicidad: AdvertisingContract[];
+  publicidadValores: AdvertisingRate[];
   clubConfig: ClubConfig;
   isOffline: boolean;
   syncQueue: SyncTask[];

@@ -1,21 +1,21 @@
 
 import React from 'react';
-import { Socio, PagoSocio, CuotaConfig } from '../types';
+import { Member, MemberPayment, MembershipRate } from '../types';
 import { MONTHS } from '../constants';
 import { Check, Clock, AlertCircle, FileText, Printer, FileSpreadsheet, CheckCircle2, AlertTriangle } from 'lucide-react';
 import ConfirmationModal from './ConfirmationModal';
 
-interface PagosGestionProps {
-  socio: Socio;
-  pagos: PagoSocio[];
-  config: CuotaConfig[];
-  onRegister: (meses: number[]) => PagoSocio[];
+interface PaymentsManagementProps {
+  socio: Member;
+  pagos: MemberPayment[];
+  config: MembershipRate[];
+  onRegister: (meses: number[]) => MemberPayment[];
   onClose: () => void;
 }
 
-const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onRegister, onClose }) => {
+const PaymentsManagement: React.FC<PaymentsManagementProps> = ({ socio, pagos, config, onRegister, onClose }) => {
   const [selectedMeses, setSelectedMeses] = React.useState<number[]>([]);
-  const [lastRegisteredPagos, setLastRegisteredPagos] = React.useState<PagoSocio[]>([]);
+  const [lastRegisteredPagos, setLastRegisteredPagos] = React.useState<MemberPayment[]>([]);
   const [showConfirmPayment, setShowConfirmPayment] = React.useState(false);
   const [showSuccessModal, setShowSuccessModal] = React.useState(false);
 
@@ -30,7 +30,7 @@ const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onReg
   };
 
   const isPagado = (mes: number) => pagos.some(p => p.mes === mes && p.año === añoActual && !p.anulado);
-  
+
   const getCuotaValor = (mes: number) => {
     const c = config.find(cf => cf.mes === mes && cf.año === añoActual && cf.categoria === socio.categoria);
     return c ? c.valor : 2500;
@@ -46,7 +46,7 @@ const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onReg
     setShowSuccessModal(true); // Mostrar el prompt de impresión inmediatamente
   };
 
-  const generateReceiptHTML = (pago: PagoSocio) => `
+  const generateReceiptHTML = (pago: MemberPayment) => `
     <div class="receipt-box" style="border: 2px solid #064e3b; padding: 30px; border-radius: 20px; max-width: 600px; margin: 0 auto 40px auto; page-break-after: always;">
       <div class="header" style="display: flex; justify-content: space-between; border-bottom: 2px solid #f0fdf4; padding-bottom: 20px; margin-bottom: 20px;">
         <div>
@@ -79,7 +79,7 @@ const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onReg
     </div>
   `;
 
-  const printReceipt = (pago: PagoSocio) => {
+  const printReceipt = (pago: MemberPayment) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
     printWindow.document.write(`<html><head><title>Recibo ${pago.recibo_numero}</title><style>body { font-family: sans-serif; padding: 40px; color: #333; }</style></head><body>${generateReceiptHTML(pago)}</body></html>`);
@@ -123,7 +123,7 @@ const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onReg
       </div>
 
       <div className="flex gap-4 mb-6">
-          <button 
+          <button
             onClick={emitAccountStatement}
             className="flex-1 py-3 bg-white border-2 border-emerald-100 text-emerald-700 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-50 transition-all shadow-sm"
           >
@@ -178,7 +178,7 @@ const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onReg
       </div>
 
       {/* Confirmation Modals */}
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={showConfirmPayment}
         title="Confirmar Cobro"
         message={`¿Está seguro de registrar el cobro de ${selectedMeses.length} cuota(s) por un valor de $${totalSeleccionado.toLocaleString()}?`}
@@ -198,15 +198,15 @@ const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onReg
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-2">¡Pago Exitoso!</h3>
             <p className="text-slate-500 font-medium mb-8">El ingreso se registró correctamente. ¿Desea imprimir los recibos en este momento?</p>
-            
+
             <div className="space-y-3">
-              <button 
+              <button
                 onClick={printAllReceipts}
                 className="w-full py-4 bg-emerald-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-200 flex items-center justify-center gap-3 hover:-translate-y-1 transition-all"
               >
                 <Printer size={20} /> Imprimir Todo el Lote
               </button>
-              
+
               <div className="flex flex-wrap justify-center gap-2 py-2">
                 {lastRegisteredPagos.map(p => (
                    <button key={p.id} onClick={() => printReceipt(p)} className="px-3 py-1.5 bg-slate-50 text-[10px] font-black uppercase rounded-lg border hover:bg-emerald-50 text-emerald-800 transition-colors">
@@ -215,7 +215,7 @@ const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onReg
                 ))}
               </div>
 
-              <button 
+              <button
                 onClick={() => setShowSuccessModal(false)}
                 className="w-full py-4 text-slate-400 font-black text-xs uppercase tracking-widest hover:text-slate-600 transition-colors"
               >
@@ -234,4 +234,4 @@ const PagosGestion: React.FC<PagosGestionProps> = ({ socio, pagos, config, onReg
   );
 };
 
-export default PagosGestion;
+export default PaymentsManagement;

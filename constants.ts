@@ -1,5 +1,5 @@
 
-import { UserRole, SocioCategory, PanelStatus } from './types';
+import { UserRole, MemberCategory, PanelStatus } from './types';
 
 export const ROLES_CONFIG = {
   [UserRole.ADMIN_GENERAL]: { label: 'Admin General', canEditConfig: true, canEditAccounting: true },
@@ -9,11 +9,11 @@ export const ROLES_CONFIG = {
 };
 
 export const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
-export const CATEGORIES: SocioCategory[] = ['general', 'grupo_familiar'];
+export const CATEGORIES: MemberCategory[] = ['general', 'grupo_familiar'];
 
 export const INITIAL_PANELES = Array.from({ length: 72 }, (_, i) => ({
   id: `p-${i + 1}`,

@@ -1,15 +1,15 @@
 
 import React from 'react';
-import { AppState, Socio, UserRole, PagoSocio, MovimientoContable, CuotaConfig, PublicidadValorConfig, ContratoPublicidad, ClubConfig, AgenteCobranza, User, SyncTask } from './types';
+import { AppState, Member, UserRole, MemberPayment, AccountingMovement, MembershipRate, AdvertisingRate, AdvertisingContract, ClubConfig, Collector, User, SyncTask } from './types';
 import { StorageService } from './services/storage';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
-import SociosList from './components/SociosList';
-import PagosGestion from './components/PagosGestion';
-import SocioForm from './components/SocioForm';
-import PublicidadPaneles from './components/PublicidadPaneles';
-import ContabilidadModule from './components/ContabilidadModule';
-import ReportesModule from './components/ReportesModule';
+import MembersList from './components/MembersList.tsx';
+import PaymentsManagement from './components/PaymentsManagement.tsx';
+import MemberForm from './components/MemberForm.tsx';
+import AdvertisingPanels from './components/AdvertisingPanels.tsx';
+import AccountingModule from './components/AccountingModule.tsx';
+import ReportsModule from './components/ReportsModule.tsx';
 import ConfirmationModal from './components/ConfirmationModal';
 import Login from './components/Login';
 import UserManagement from './components/UserManagement';
@@ -34,13 +34,13 @@ const App: React.FC = () => {
   });
 
   const [activeTab, setActiveTab] = React.useState('dashboard');
-  const [selectedSocio, setSelectedSocio] = React.useState<Socio | null>(null);
+  const [selectedSocio, setSelectedSocio] = React.useState<Member | null>(null);
   const [isAddingSocio, setIsAddingSocio] = React.useState(false);
   const [adminView, setAdminView] = React.useState<'main' | 'cuotas' | 'publicidad_config' | 'institucional' | 'recibos' | 'usuarios'>('main');
-  
+
   // SE ESTABLECE 2026 COMO AÑO DE INICIO PARA CONFIGURACIÓN
   const [adminSelectedYear, setAdminSelectedYear] = React.useState(2026);
-  
+
   const [showEgresoModal, setShowEgresoModal] = React.useState(false);
   const [egresoGrupo, setEgresoGrupo] = React.useState<'socios' | 'publicidad'>('socios');
   const [pagoToAnnul, setPagoToAnnul] = React.useState<string | null>(null);
@@ -102,20 +102,20 @@ const App: React.FC = () => {
     setShowLogoutConfirm(false);
   };
 
-  const handleSaveNewSocio = (socioData: Omit<Socio, 'id' | 'created_at'>) => {
-    const nuevo: Socio = { ...socioData, id: crypto.randomUUID(), created_at: new Date().toISOString() };
+  const handleSaveNewSocio = (socioData: Omit<Member, 'id' | 'created_at'>) => {
+    const nuevo: Member = { ...socioData, id: crypto.randomUUID(), created_at: new Date().toISOString() };
     StorageService.addSocio(nuevo);
     refreshData();
     setIsAddingSocio(false);
   };
 
-  const handleRegisterPago = (meses: number[]): PagoSocio[] => {
+  const handleRegisterPago = (meses: number[]): MemberPayment[] => {
     if (!selectedSocio) return [];
-    const newPagos: PagoSocio[] = [];
+    const newPagos: MemberPayment[] = [];
     meses.forEach(mes => {
       const config = appState.cuotasConfig.find(c => c.mes === mes && c.año === currentYear && c.categoria === selectedSocio.categoria);
       const monto = config ? config.valor : 2500;
-      const pago: PagoSocio = {
+      const pago: MemberPayment = {
         id: crypto.randomUUID(), socio_id: selectedSocio.id, año: currentYear, mes: mes, monto: monto,
         fecha_pago: new Date().toISOString(), recibo_numero: StorageService.getNextRecibo(currentYear),
         anulado: false, usuario_registro: appState.user?.id || 'sys',
@@ -142,7 +142,7 @@ const App: React.FC = () => {
     const descripcion = formData.get('descripcion') as string;
     const categoria = formData.get('categoria') as string;
 
-    const movimiento: MovimientoContable = {
+    const movimiento: AccountingMovement = {
       id: crypto.randomUUID(),
       fecha: new Date().toISOString(),
       tipo: 'egreso',
@@ -190,7 +190,7 @@ const App: React.FC = () => {
     alert('Datos del presidente actualizados correctamente');
   };
 
-  const printReceipt = (pago: PagoSocio, socio: Socio) => {
+  const printReceipt = (pago: MemberPayment, socio: Member) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
     printWindow.document.write(`<html><head><title>Recibo ${pago.recibo_numero}</title><style>body { font-family: sans-serif; padding: 40px; color: #333; } .receipt-box { border: 2px solid #064e3b; padding: 30px; border-radius: 20px; max-width: 600px; margin: 0 auto; } .header { display: flex; justify-content: space-between; border-bottom: 2px solid #f0fdf4; padding-bottom: 20px; margin-bottom: 20px; } .club-name { color: #064e3b; font-size: 24px; font-weight: 900; margin: 0; } .total { background: #f0fdf4; padding: 20px; border-radius: 15px; text-align: right; } .total-val { font-size: 28px; font-weight: 900; color: #064e3b; }</style></head><body><div class="receipt-box"><h1>C.D. 1° DE MAYO</h1><p>Recibo N° ${pago.recibo_numero}</p><p>Socio: ${socio.nombre} ${socio.apellido}</p><p>Concepto: Cuota ${MONTHS[pago.mes-1]} / ${pago.año}</p><div class="total">Monto: $${pago.monto.toLocaleString()}</div></div></body></html>`);
@@ -206,24 +206,24 @@ const App: React.FC = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard sociosCount={appState.socios.length} movimientos={appState.movimientos} />;
       case 'socios':
-        if (selectedSocio) return <PagosGestion socio={selectedSocio} pagos={appState.pagos.filter(p => p.socio_id === selectedSocio.id)} config={appState.cuotasConfig} onRegister={handleRegisterPago} onClose={() => setSelectedSocio(null)} />;
-        if (isAddingSocio) return <SocioForm onSave={handleSaveNewSocio} onCancel={() => setIsAddingSocio(false)} existingNumbers={appState.socios.map(s => s.numero_socio)} existingDnis={appState.socios.map(s => s.dni)} />;
-        return <SociosList socios={appState.socios} onAdd={() => setIsAddingSocio(true)} onSelect={setSelectedSocio} />;
-      case 'publicidad': return <PublicidadPaneles paneles={appState.paneles} contratos={appState.contratosPublicidad} valores={appState.publicidadValores} clubConfig={appState.clubConfig} userRole={appState.user?.role || UserRole.COBRADOR} onRegisterContract={(contrato) => { StorageService.addContratoPublicidad(contrato, appState.user?.id || 'admin'); refreshData(); }} onRegisterPayment={(cid, monto) => { StorageService.registerPagoPublicidad(cid, monto, appState.user?.id || 'admin'); refreshData(); }} onRefresh={refreshData} />;
-      case 'contabilidad': 
+        if (selectedSocio) return <PaymentsManagement socio={selectedSocio} pagos={appState.pagos.filter(p => p.socio_id === selectedSocio.id)} config={appState.cuotasConfig} onRegister={handleRegisterPago} onClose={() => setSelectedSocio(null)} />;
+        if (isAddingSocio) return <MemberForm onSave={handleSaveNewSocio} onCancel={() => setIsAddingSocio(false)} existingNumbers={appState.socios.map(s => s.numero_socio)} existingDnis={appState.socios.map(s => s.dni)} />;
+        return <MembersList socios={appState.socios} onAdd={() => setIsAddingSocio(true)} onSelect={setSelectedSocio} />;
+      case 'publicidad': return <AdvertisingPanels paneles={appState.paneles} contratos={appState.contratosPublicidad} valores={appState.publicidadValores} clubConfig={appState.clubConfig} userRole={appState.user?.role || UserRole.COBRADOR} onRegisterContract={(contrato) => { StorageService.addContratoPublicidad(contrato, appState.user?.id || 'admin'); refreshData(); }} onRegisterPayment={(cid, monto) => { StorageService.registerPagoPublicidad(cid, monto, appState.user?.id || 'admin'); refreshData(); }} onRefresh={refreshData} />;
+      case 'contabilidad':
         return (
-          <ContabilidadModule 
-            movimientos={appState.movimientos} 
+          <AccountingModule
+            movimientos={appState.movimientos}
             socios={appState.socios}
             userRole={appState.user?.role}
-            onAddEgreso={() => setShowEgresoModal(true)} 
-            onRefresh={refreshData} 
+            onAddEgreso={() => setShowEgresoModal(true)}
+            onRefresh={refreshData}
           />
         );
-      case 'reportes': return <ReportesModule movimientos={appState.movimientos} socios={appState.socios} contratos={appState.contratosPublicidad} />;
+      case 'reportes': return <ReportsModule movimientos={appState.movimientos} socios={appState.socios} contratos={appState.contratosPublicidad} />;
       case 'admin':
         if (adminView === 'usuarios') return <UserManagement onRefresh={refreshData} onBack={() => setAdminView('main')} />;
-        
+
         if (adminView === 'cuotas') {
           return (
             <div className="space-y-6">
@@ -232,7 +232,7 @@ const App: React.FC = () => {
                 <div className="h-6 w-px bg-slate-200"></div>
                 <h2 className="text-2xl font-black text-slate-900 tracking-tight">Valores de Cuotas</h2>
               </div>
-              
+
               <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-[2rem] flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-emerald-600 rounded-2xl text-white shadow-lg"><Calendar size={24} /></div>
@@ -243,8 +243,8 @@ const App: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <label className="text-xs font-bold text-emerald-800">Cambiar Año:</label>
-                  <select 
-                    value={adminSelectedYear} 
+                  <select
+                    value={adminSelectedYear}
                     onChange={(e) => {
                       const y = Number(e.target.value);
                       setAdminSelectedYear(y);
@@ -271,8 +271,8 @@ const App: React.FC = () => {
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">VALOR MENSUAL ACTUAL ($)</label>
                           <div className="relative group">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-black text-slate-300">$</span>
-                            <input 
-                              type="number" 
+                            <input
+                              type="number"
                               defaultValue={c.valor}
                               onBlur={(e) => {
                                 const newVal = Number(e.target.value);
@@ -317,8 +317,8 @@ const App: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <label className="text-xs font-bold text-indigo-800">Cambiar Año:</label>
-                  <select 
-                    value={adminSelectedYear} 
+                  <select
+                    value={adminSelectedYear}
                     onChange={(e) => {
                       const y = Number(e.target.value);
                       setAdminSelectedYear(y);
@@ -351,8 +351,8 @@ const App: React.FC = () => {
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{item.label}</label>
                           <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-400">$</span>
-                            <input 
-                              type="number" 
+                            <input
+                              type="number"
                               defaultValue={(config as any)[item.field]}
                               onBlur={(e) => {
                                 StorageService.updatePublicidadConfig(config.id, item.field as any, Number(e.target.value));
@@ -375,7 +375,7 @@ const App: React.FC = () => {
           return (
             <div className="space-y-8">
               <button onClick={() => setAdminView('main')} className="text-emerald-700 font-bold flex items-center gap-1 hover:underline"><ArrowLeft size={18} /> Volver</button>
-              
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Datos Presidente */}
                 <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm space-y-6">
@@ -418,17 +418,17 @@ const App: React.FC = () => {
                     <div className="flex flex-col gap-3 p-5 bg-slate-50 border-2 border-slate-100 rounded-3xl">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 mb-1">Agregar Nuevo Agente</p>
                       <div className="flex flex-col sm:flex-row gap-2">
-                        <input 
-                          placeholder="Nombre y Apellido" 
-                          value={newAgenteName} 
+                        <input
+                          placeholder="Nombre y Apellido"
+                          value={newAgenteName}
                           onChange={(e) => setNewAgenteName(e.target.value)}
-                          className="flex-1 p-4 bg-white border border-slate-200 rounded-2xl font-bold text-sm outline-none focus:border-indigo-500 shadow-sm" 
+                          className="flex-1 p-4 bg-white border border-slate-200 rounded-2xl font-bold text-sm outline-none focus:border-indigo-500 shadow-sm"
                         />
-                        <input 
-                          placeholder="DNI" 
+                        <input
+                          placeholder="DNI"
                           value={newAgenteDni}
                           onChange={(e) => setNewAgenteDni(e.target.value)}
-                          className="w-full sm:w-32 p-4 bg-white border border-slate-200 rounded-2xl font-bold text-sm outline-none focus:border-indigo-500 shadow-sm" 
+                          className="w-full sm:w-32 p-4 bg-white border border-slate-200 rounded-2xl font-bold text-sm outline-none focus:border-indigo-500 shadow-sm"
                         />
                         <button onClick={handleAddAgente} className="p-4 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center"><Plus size={24} /></button>
                       </div>
@@ -516,9 +516,9 @@ const App: React.FC = () => {
                 { id: 'recibos', label: 'Gestión de Recibos', desc: 'Auditoría histórica de cobros.', icon: Printer, color: 'text-emerald-700', bg: 'bg-emerald-50' },
                 { id: 'usuarios', label: 'Gestión Usuarios', desc: 'Cuentas y permisos de acceso.', icon: Users, color: 'text-indigo-700', bg: 'bg-indigo-50' }
               ].map(card => (
-                <button 
+                <button
                   key={card.id}
-                  onClick={() => setAdminView(card.id as any)} 
+                  onClick={() => setAdminView(card.id as any)}
                   className="group p-8 bg-white rounded-[2.5rem] border border-slate-100 hover:border-slate-300 hover:shadow-2xl transition-all text-left flex flex-col items-start gap-4 relative overflow-hidden active:scale-95"
                 >
                   <div className={`p-4 ${card.bg} ${card.color} rounded-2xl group-hover:scale-110 transition-transform duration-500`}>
@@ -540,15 +540,15 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Layout 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        userRole={appState.user?.role || UserRole.COBRADOR} 
-        onLogout={() => setShowLogoutConfirm(true)} 
+      <Layout
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        userRole={appState.user?.role || UserRole.COBRADOR}
+        onLogout={() => setShowLogoutConfirm(true)}
         isOffline={appState.isOffline}
       >
         <div className={appState.isOffline ? 'pt-10' : ''}>{renderContent()}</div>
-        
+
         {showEgresoModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
             <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-200">
@@ -592,7 +592,7 @@ const App: React.FC = () => {
         )}
       </Layout>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={showLogoutConfirm}
         title="¿Cerrar Sesión?"
         message="¿Estás seguro que deseas salir del sistema? Deberás ingresar tus credenciales nuevamente."

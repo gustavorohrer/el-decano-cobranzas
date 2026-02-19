@@ -1,24 +1,24 @@
 
 import React from 'react';
-import { MovimientoContable, UserRole, Socio } from '../types';
+import { AccountingMovement, UserRole, Member } from '../types';
 import { ArrowUpCircle, ArrowDownCircle, Plus, Edit2, Trash2, X, Info, Users, LayoutGrid, Eye, EyeOff } from 'lucide-react';
 import { StorageService } from '../services/storage';
 import ConfirmationModal from './ConfirmationModal';
 
-interface ContabilidadModuleProps {
-  movimientos: MovimientoContable[];
-  socios?: Socio[];
+interface AccountingModuleProps {
+  movimientos: AccountingMovement[];
+  socios?: Member[];
   userRole?: UserRole;
   onAddEgreso: () => void;
   onRefresh: () => void;
 }
 
-const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, socios = [], userRole, onAddEgreso, onRefresh }) => {
-  const [editingMov, setEditingMov] = React.useState<MovimientoContable | null>(null);
+const AccountingModule: React.FC<AccountingModuleProps> = ({ movimientos, socios = [], userRole, onAddEgreso, onRefresh }) => {
+  const [editingMov, setEditingMov] = React.useState<AccountingMovement | null>(null);
   const [editGrupo, setEditGrupo] = React.useState<'socios' | 'publicidad'>('socios');
   const [movToDelete, setMovToDelete] = React.useState<string | null>(null);
   const [showDetailed, setShowDetailed] = React.useState(false);
-  
+
   const isAdmin = userRole === UserRole.ADMIN_GENERAL;
   const ingresos = movimientos.filter(m => m.tipo === 'ingreso' && !m.anulado).reduce((acc, m) => acc + m.monto, 0);
   const egresos = movimientos.filter(m => m.tipo === 'egreso' && !m.anulado).reduce((acc, m) => acc + m.monto, 0);
@@ -31,7 +31,7 @@ const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, so
         .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
     }
 
-    const processed: (MovimientoContable & { count?: number; isGrouped?: boolean })[] = [];
+    const processed: (AccountingMovement & { count?: number; isGrouped?: boolean })[] = [];
     const socioGroups: Record<string, { total: number; count: number; ids: string[]; fecha: string }> = {};
 
     movimientos.forEach(m => {
@@ -93,7 +93,7 @@ const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, so
     onRefresh();
   };
 
-  const startEdit = (m: MovimientoContable) => {
+  const startEdit = (m: AccountingMovement) => {
     setEditingMov(m);
     setEditGrupo(m.grupo_egreso || (m.origen === 'socios' ? 'socios' : 'publicidad'));
   };
@@ -106,14 +106,14 @@ const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, so
           <p className="text-sm text-slate-500">Gestión de ingresos y egresos del club.</p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={() => setShowDetailed(!showDetailed)}
             className={`px-4 py-2 rounded-xl flex items-center gap-2 font-bold transition-all border-2 ${showDetailed ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200'}`}
           >
             {showDetailed ? <EyeOff size={18} /> : <Eye size={18} />}
             {showDetailed ? 'Vista Resumida' : 'Vista Detallada'}
           </button>
-          <button 
+          <button
             onClick={onAddEgreso}
             className="bg-red-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-red-700 transition-colors shadow-lg font-bold"
           >
@@ -189,15 +189,15 @@ const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, so
                     <div className="flex justify-center gap-1">
                       {isAdmin && !m.isGrouped && (
                         <>
-                          <button 
-                            onClick={() => startEdit(m)} 
+                          <button
+                            onClick={() => startEdit(m)}
                             className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                             title="Editar monto/descripción"
                           >
                             <Edit2 size={16} />
                           </button>
-                          <button 
-                            onClick={() => setMovToDelete(m.id)} 
+                          <button
+                            onClick={() => setMovToDelete(m.id)}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Borrar registro y revertir estado"
                           >
@@ -206,7 +206,7 @@ const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, so
                         </>
                       )}
                       {m.isGrouped && (
-                         <button 
+                         <button
                           onClick={() => setShowDetailed(true)}
                           className="text-[8px] font-black text-indigo-600 uppercase hover:underline"
                          >
@@ -214,8 +214,8 @@ const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, so
                          </button>
                       )}
                       {!isAdmin && !m.isGrouped && m.origen === 'manual' && (
-                         <button 
-                         onClick={() => setMovToDelete(m.id)} 
+                         <button
+                         onClick={() => setMovToDelete(m.id)}
                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                        >
                          <Trash2 size={16} />
@@ -230,7 +230,7 @@ const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, so
         </div>
       </div>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={!!movToDelete}
         title="Eliminar Registro"
         message="¿Está seguro de eliminar este registro? Si es un pago de socio, el mes volverá a estar pendiente. Si es cartelería, se descontará la cuota pagada del contrato."
@@ -268,4 +268,4 @@ const ContabilidadModule: React.FC<ContabilidadModuleProps> = ({ movimientos, so
   );
 };
 
-export default ContabilidadModule;
+export default AccountingModule;
