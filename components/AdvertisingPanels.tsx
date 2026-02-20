@@ -30,7 +30,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
   const [viewState, setViewState] = React.useState<'choice' | 'details' | 'sell' | 'associate'>('choice');
   const [activeTab, setActiveTab] = React.useState<'map' | 'expirations'>('map');
 
-  // Estados para filtros de vencimientos
+  // State for expiration filters
   const [searchClient, setSearchClient] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState<'todos' | 'activos' | 'proximos' | 'vencidos'>('todos');
 
@@ -430,7 +430,7 @@ const AdvertisingPanels: React.FC<AdvertisingPanelsProps> = ({
                             installment = mod === 'cash' ? total : (total / Number(mod));
                         }
 
-                        // CALCULO DE VENCIMIENTO basado en FECHA DE INICIO seleccionada
+                        // Expiration calculation based on selected start date
                         const startDateVal = formData.get('fecha_inicio') as string;
                         const startDate = new Date(startDateVal);
                         const expirationDate = new Date(startDate);

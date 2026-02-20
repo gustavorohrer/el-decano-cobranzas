@@ -21,7 +21,7 @@ interface ReportsModuleProps {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 const ReportsModule: React.FC<ReportsModuleProps> = ({ movements, members, advertisingContracts }) => {
-  // Filtros de Estado
+  // State Filters
   const [filterGroup, setFilterGroup] = React.useState<'all' | 'members' | 'advertising'>('all');
   const [filterType, setFilterType] = React.useState<'all' | 'income' | 'expense'>('all');
   const [filterCategory, setFilterCategory] = React.useState<string>('all');
@@ -29,7 +29,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movements, members, adver
   const [endDate, setEndDate] = React.useState<string>('');
   const [showFilters, setShowFilters] = React.useState(true);
 
-  // Obtener categorías disponibles basadas en el grupo
+  // Get available categories based on group
   const getCategories = () => {
     if (filterGroup === 'members') {
       return [
@@ -54,7 +54,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movements, members, adver
     return []; // Para TOTAL no mostramos categorías específicas por ahora o sumamos todas
   };
 
-  // Lógica de Filtrado de Datos
+  // Data Filtering Logic
   const filteredMovements = movements.filter(m => {
     if (m.is_annulled) return false;
 
@@ -80,12 +80,12 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movements, members, adver
     return true;
   });
 
-  // Totales Filtrados
+  // Filtered Totals
   const totalIncome = filteredMovements.filter(m => m.type === 'income').reduce((acc, m) => acc + m.amount, 0);
   const totalExpense = filteredMovements.filter(m => m.type === 'expense').reduce((acc, m) => acc + m.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  // Datos para Gráfico de Área (Evolución)
+  // Data for Area Chart (Evolution)
   const areaChartData = MONTHS.map((month, index) => {
     const monthIndex = index + 1;
     const year = new Date().getFullYear(); // Simplificado al año actual o al año del startDate si existe
@@ -153,7 +153,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movements, members, adver
         </div>
       </div>
 
-      {/* Panel de Filtros */}
+      {/* Filter Panel */}
       {showFilters && (
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -297,7 +297,7 @@ const ReportsModule: React.FC<ReportsModuleProps> = ({ movements, members, adver
         </div>
       </div>
 
-      {/* Tabla Detallada */}
+      {/* Detailed Table */}
       <div className="space-y-4">
         <div className="flex justify-between items-center px-2">
           <h3 className="text-lg font-black text-slate-900">Auditoría de Movimientos</h3>

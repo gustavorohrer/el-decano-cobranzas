@@ -1,16 +1,19 @@
 
 import React from 'react';
-import { Search, Plus, Phone, MapPin, ChevronRight, UserCircle } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, ChevronRight, UserCircle, Upload } from 'lucide-react';
 import { Member } from '../types';
+import ImportMembersModal from './ImportMembersModal';
 
 interface MembersListProps {
   members: Member[];
   onAdd: () => void;
   onSelect: (member: Member) => void;
+  onRefresh: () => void;
 }
 
-const MembersList: React.FC<MembersListProps> = ({ members, onAdd, onSelect }) => {
+const MembersList: React.FC<MembersListProps> = ({ members, onAdd, onSelect, onRefresh }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [isImportModalOpen, setIsImportModalOpen] = React.useState(false);
 
   const filteredMembers = members.filter(s =>
     `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -21,13 +24,22 @@ const MembersList: React.FC<MembersListProps> = ({ members, onAdd, onSelect }) =
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <h2 className="text-2xl font-bold text-emerald-900">Gestión de Socios</h2>
-        <button
-          onClick={onAdd}
-          className="bg-emerald-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-900/20 font-bold"
-        >
-          <Plus size={20} />
-          Nuevo Socio
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="bg-white border-2 border-emerald-100 text-emerald-700 px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-emerald-50 transition-all shadow-sm font-bold"
+          >
+            <Upload size={20} />
+            Importar Excel
+          </button>
+          <button
+            onClick={onAdd}
+            className="bg-emerald-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-emerald-800 transition-all shadow-lg shadow-emerald-900/20 font-bold"
+          >
+            <Plus size={20} />
+            Nuevo Socio
+          </button>
+        </div>
       </div>
 
       <div className="relative">
@@ -82,6 +94,13 @@ const MembersList: React.FC<MembersListProps> = ({ members, onAdd, onSelect }) =
           <p className="text-emerald-800 font-medium">No se encontraron socios que coincidan con la búsqueda.</p>
         </div>
       )}
+
+      <ImportMembersModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+        existingMembers={members}
+        onImportComplete={onRefresh}
+      />
     </div>
   );
 };

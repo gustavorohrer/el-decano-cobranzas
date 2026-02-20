@@ -18,6 +18,7 @@ import { MONTHS } from './constants';
 // Added ArrowLeft to lucide-react imports
 import { Save, Upload, X, CheckCircle, Image, Download, FileSpreadsheet, AlertCircle, LayoutGrid, CreditCard, FileText, UserCircle, Plus, Trash2, Calendar, Printer, Search, Ban, Users, CloudOff, Wifi, Cloud, Building2, UserPlus, Briefcase, UserCheck, ChevronRight, ArrowLeft } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { DataRepository } from "@/services/dataRepository.ts";
 
 const App: React.FC = () => {
   const { appState, setAppState, refreshData, isLoading } = useAppState();
@@ -27,7 +28,7 @@ const App: React.FC = () => {
   const [isAddingMember, setIsAddingMember] = React.useState(false);
   const [adminView, setAdminView] = React.useState<'main' | 'membership_rates' | 'advertising_rates' | 'institutional' | 'receipts' | 'users'>('main');
 
-  // SE ESTABLECE 2026 COMO AÑO DE INICIO PARA CONFIGURACIÓN
+  // Set 2026 as the starting year for configuration
   const [adminSelectedYear, setAdminSelectedYear] = React.useState(2026);
 
   const [showExpenseModal, setShowExpenseModal] = React.useState(false);
@@ -67,11 +68,15 @@ const App: React.FC = () => {
     setShowLogoutConfirm(false);
   };
 
-  const handleSaveNewMember = (memberData: Omit<Member, 'id' | 'created_at'>) => {
+  const handleSaveNewMember = async (memberData: Omit<Member, 'id' | 'created_at'>) => {
     const nuevo: Member = { ...memberData, id: crypto.randomUUID(), created_at: new Date().toISOString() };
-    StorageService.addMember(nuevo);
-    refreshData();
-    setIsAddingMember(false);
+    const result = await DataRepository.createMember(nuevo);
+    if (result.success) {
+      refreshData();
+      setIsAddingMember(false);
+    } else {
+      alert('Error al guardar el socio: ' + result.error);
+    }
   };
 
   const handleRegisterPayment = (months: number[]): MemberPayment[] => {
@@ -173,7 +178,7 @@ const App: React.FC = () => {
       case 'members':
         if (selectedMember) return <PaymentsManagement member={selectedMember} payments={appState.payments.filter(p => p.member_id === selectedMember.id)} membershipRates={appState.membershipRates} onRegister={handleRegisterPayment} onClose={() => setSelectedMember(null)} />;
         if (isAddingMember) return <MemberForm onSave={handleSaveNewMember} onCancel={() => setIsAddingMember(false)} existingNumbers={appState.members.map(s => s.member_number)} existingDnis={appState.members.map(s => s.dni)} />;
-        return <MembersList members={appState.members} onAdd={() => setIsAddingMember(true)} onSelect={setSelectedMember} />;
+        return <MembersList members={appState.members} onAdd={() => setIsAddingMember(true)} onSelect={setSelectedMember} onRefresh={refreshData} />;
       case 'advertising': return <AdvertisingPanels panels={appState.panels} advertisingContracts={appState.advertisingContracts} advertisingRates={appState.advertisingRates} clubConfig={appState.clubConfig} userRole={appState.user?.role || UserRole.COBRADOR} onRegisterContract={(contract) => { StorageService.addAdvertisingContract(contract, appState.user?.id || 'admin'); refreshData(); }} onRegisterPayment={(cid, amount) => { StorageService.registerAdvertisingPayment(cid, amount, appState.user?.id || 'admin'); refreshData(); }} onRefresh={refreshData} />;
       case 'accounting':
         return (
@@ -342,7 +347,7 @@ const App: React.FC = () => {
               <button onClick={() => setAdminView('main')} className="text-emerald-700 font-bold flex items-center gap-1 hover:underline"><ArrowLeft size={18} /> Volver</button>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Datos Presidente */}
+                {/* President Data */}
                 <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm space-y-6">
                   <h3 className="text-xl font-black flex items-center gap-3">
                     <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl"><UserCheck size={20} /></div>
@@ -373,7 +378,7 @@ const App: React.FC = () => {
                   </form>
                 </div>
 
-                {/* Agentes de Cobranza */}
+                {/* Collection Agents */}
                 <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm space-y-6">
                   <h3 className="text-xl font-black flex items-center gap-3">
                     <div className="p-2 bg-indigo-100 text-indigo-700 rounded-xl"><Briefcase size={20} /></div>

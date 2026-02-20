@@ -120,7 +120,7 @@ export interface ClubConfig {
   collectors: Collector[];
 }
 
-// Nueva interfaz para tareas de sincronización
+// New interface for synchronization tasks
 export interface SyncTask {
   id: string;
   type: 'MEMBER_CREATE' | 'PAYMENT_REGISTER' | 'EXPENSE_ADD' | 'ADVERTISING_CONTRACT' | 'ADVERTISING_PAY';

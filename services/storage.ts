@@ -437,7 +437,7 @@ export const StorageService = {
       data.movements.push(movement);
       contract.installments_paid = 1;
     }
-    this.addToSyncQueue('PUBLICIDAD_CONTRACT', { contract, movement });
+    this.addToSyncQueue('ADVERTISING_CONTRACT', { contract, movement });
     this.saveData(data);
   },
 
@@ -498,7 +498,7 @@ export const StorageService = {
         created_by: userId,
       };
       data.movements.push(movement);
-      this.addToSyncQueue('PUBLICIDAD_PAY', { contract_id: contractId, amount, movement });
+      this.addToSyncQueue('ADVERTISING_PAY', { contract_id: contractId, amount, movement });
       this.saveData(data);
     }
   },
