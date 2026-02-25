@@ -3,11 +3,5 @@ apply: manually
 description: "Creating new OpenSpec changes"
 ---
 # OpenSpec Proposal Workflow
-Create new proposals under `openspec/changes/<change-id>/`.
-Include:
-- `proposal.md`
-- `tasks.md`
-- Spec deltas under `specs/` in the change directory.
-
-See `openspec/AGENTS.md` for formatting and validation rules.
-Validating before sharing is mandatory.
+See `docs/workflows/openspec/proposal.md` for the complete workflow documentation.
+This workflow can be invoked using @openspec-proposal.

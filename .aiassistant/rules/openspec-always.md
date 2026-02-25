@@ -7,8 +7,8 @@ You MUST always follow the OpenSpec workflow when working in this repository.
 
 ## When to Consult OpenSpec
 Always open `openspec/AGENTS.md` when the request:
-- Mentions planning, proposals, or architecture (proposal, spec, change, plan)
-- Introduces new features or refactors existing code
+- Mentions planning or proposals (proposal, spec, change, plan)
+- Introduces new capabilities, breaking changes, or refactors
 - Sounds ambiguous and you need the authoritative spec before coding
 
 ## Three-Stage Workflow
@@ -17,4 +17,6 @@ Always open `openspec/AGENTS.md` when the request:
 3. **Archive** (@openspec-archive) - Archive the deployed change
 
 For detailed workflow procedures, see:
-- `openspec/AGENTS.md`
+- `docs/workflows/openspec/proposal.md`
+- `docs/workflows/openspec/apply.md`
+- `docs/workflows/openspec/archive.md`
