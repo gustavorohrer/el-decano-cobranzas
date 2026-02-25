@@ -3,46 +3,67 @@
 Instructions for AI coding assistants using OpenSpec for spec-driven development.
 
 ## TL;DR Quick Checklist
-- Search existing work: `openspec spec list --long`, `openspec list` (use `rg` only for full-text search)
-- Decide scope: new capability vs modify existing capability
-- Pick a unique `change-id`: kebab-case, verb-led (`add-`, `update-`, `remove-`, `refactor-`)
-- Scaffold: `proposal.md`, `tasks.md`, `design.md` (only if needed), and delta specs per affected capability
+- **Search existing work**: `openspec list --specs`, `openspec list`. Use `rg` for full-text search.
+- **Decide scope**: New capability vs. modifying existing one.
+- **Pick a unique `change-id`**: Kebab-case, verb-led (e.g., `refactor-members-dao`).
+- **Scaffold**: `proposal.md`, `tasks.md`, and spec deltas under `openspec/changes/<id>/`.
 - **MANDATORY**: Requirements MUST use normative language (**SHALL** or **MUST**) and include at least one **#### Scenario:** header.
-- Validate: `openspec validate [change-id] --strict` and fix issues
+- **Validate**: `openspec validate [id] --strict` and fix issues.
+- **Implement**: Run `@openspec-apply` and follow the `tasks.md`.
 
 ## Three-Stage Workflow
 
-### Stage 1: Creating Changes
-Create proposal when you need to:
-- Add features or functionality
-- Refactor existing code (to ensure behavior preservation)
-- Make breaking changes (schema, API)
-- Architecture or pattern shifts
+Always use the JetBrains AI `@rules` to invoke the workflows.
 
-### Stage 2: Implementing Changes
-Track these steps as TODOs in `tasks.md`:
-1. Read `proposal.md`, `design.md` (if exists), and `tasks.md`.
+### Stage 1: Creating Changes (`@openspec-proposal`)
+Create a proposal for:
+- New features or functionality.
+- Refactoring existing legacy code.
+- Breaking changes (schema, API).
+- Architectural shifts.
+
+Refer to `docs/workflows/openspec/proposal.md` for details.
+
+### Stage 2: Implementing Changes (`@openspec-apply`)
+1. Read `proposal.md` and `tasks.md`.
 2. Implement tasks sequentially.
-3. Confirm completion. Update checklist.
+3. Update `tasks.md` progress.
+4. Run `pnpm check` and `pnpm check-types`.
 
-### Stage 3: Archiving Changes
-After deployment, archive the change:
-- `openspec archive <change-id>`
-- Move `changes/[name]/` → `changes/archive/YYYY-MM-DD-[name]/`
-- Update `specs/` with the new truth.
+Refer to `docs/workflows/openspec/apply.md` for details.
 
-## Spec File Format
-Every requirement MUST have at least one scenario using `#### Scenario: Name` format.
+### Stage 3: Archiving Changes (`@openspec-archive`)
+After successful deployment and verification:
+- Run `openspec archive <id>`.
+- Create the final archive commit.
+
+Refer to `docs/workflows/openspec/archive.md` for details.
+
+## Critical Spec File Rules
+- **Scenario Formatting**: MUST use `#### Scenario: Name` (4 hashtags). No bullets or bold in headers.
+- **Normative Language**: Use **SHALL** or **MUST** for requirements.
+- **Atomic Changes**: Keep proposals small and focused on a single outcome.
+
+## Context Checklist
+Before any task:
+- [ ] Read `openspec/project.md` for current conventions.
+- [ ] Read relevant specs in `openspec/specs/`.
+- [ ] Check pending changes in `openspec/changes/` for conflicts.
+- [ ] **MANDATORY**: Scan for existing functions/helpers before creating new ones (DRY).
 
 ## Directory Structure
 ```
 openspec/
-├── project.md              # Project conventions
+├── project.md              # Project conventions and tech stack
 ├── specs/                  # Current truth - what IS built
+│   └── [capability]/       # Single focused capability
+│       └── spec.md         # Requirements and scenarios
 ├── changes/                # Proposals - what SHOULD change
 │   └── [change-name]/
 │       ├── proposal.md     # Why, what, impact
 │       ├── tasks.md        # Implementation checklist
-│       ├── specs/          # Delta changes
-│   └── archive/            # Completed changes
+│       └── specs/          # Delta changes
+└── archive/                # Completed changes historical record
 ```
+
+Remember: Specs are truth. Changes are proposals. Always consult `docs/` for authoritative workflows.
