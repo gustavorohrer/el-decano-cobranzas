@@ -8,7 +8,17 @@ This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/drive/1gha6utugsVW5t_DZOiPkRsMFxts3Q8NP
 
-## Run Locally
+## OpenSpec Development
+
+This project uses the **OpenSpec** methodology for spec-driven development.
+
+1. **Structure**: Specifications are located in `openspec/specs/`.
+2. **Changes**: New features are proposed in `openspec/changes/`.
+3. **Workflow**: Follow the 3-stage cycle: `Proposal` -> `Apply` -> `Archive`.
+4. **Quality**: Before proposing a change, validate the specifications with the linter:
+   `node tools/lint-specs.cjs`
+
+For more details, consult `openspec/AGENTS.md`.
 
 **Prerequisites:**  Node.js
 
