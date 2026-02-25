@@ -2,6 +2,8 @@
 
 Instructions for AI coding assistants using OpenSpec for spec-driven development.
 
+**New Feature?** See our detailed **[SDD Step-by-Step Guide](../docs/workflows/sdd-step-by-step.md)** for a practical workflow in environments without Linear or CI/CD.
+
 ## TL;DR Quick Checklist
 - **Search existing work**: `openspec list --specs`, `openspec list`. Use `rg` for full-text search.
 - **Decide scope**: New capability vs. modifying existing one.

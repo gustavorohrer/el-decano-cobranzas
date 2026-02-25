@@ -14,12 +14,16 @@ I am currently in the process of **drastically improving and evolving** this pro
 
 ## Methodology: OpenSpec
 
-This project follows the **OpenSpec** methodology for rigorous spec-driven development. 
+This project follows the **OpenSpec** methodology for rigorous spec-driven development.
 
 1. **Specifications**: Located in `openspec/specs/`. These define the "Source of Truth" for system capabilities.
 2. **Proposals**: New features or architectural changes are proposed in `openspec/changes/`.
 3. **Workflow**: We follow a 3-stage lifecycle: `Proposal` -> `Apply` -> `Archive`.
 4. **Validation**: All specifications are strictly validated using a custom linter to ensure normative language (`SHALL`/`MUST`) and scenario coverage.
+
+### How to Add a New Feature
+To implement a new feature following SDD, refer to our detailed **[Step-by-Step Guide](docs/workflows/sdd-step-by-step.md)**.
+It explains the workflow for environments without Linear or automated CI/CD.
 
 For more details on how AI agents and humans collaborate on this repo, see `openspec/AGENTS.md`.
 
