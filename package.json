@@ -13,11 +13,13 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "lint": "turbo lint",
-    "format": "turbo format",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check --apply .",
     "check-types": "turbo check-types"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "turbo": "^2.6.0"
   }
 }
