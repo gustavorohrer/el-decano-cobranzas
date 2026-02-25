@@ -1,30 +1,58 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# El Decano Cobranzas
 
-# Run and deploy your AI Studio app
+A comprehensive management system for clubs: members, accounting, advertising, and PWA.
 
-This contains everything you need to run your app locally.
+⚠️ **Project Status: Work In Progress (WIP) & Refactoring**
 
-View your app in AI Studio: https://ai.studio/apps/drive/1gha6utugsVW5t_DZOiPkRsMFxts3Q8NP
+This project was originally bootstrapped using automated AI generation (AI Studio). As a result, the initial codebase was of low technical quality and lacked professional engineering standards.
 
-## OpenSpec Development
+I am currently in the process of **drastically improving and evolving** this project to demonstrate professional software engineering practices, including:
+- **Monorepo Architecture**: Migrating to a scalable monorepo using `pnpm` workspaces and `Turborepo`.
+- **Spec-Driven Development (SDD)**: Implementing the **OpenSpec** methodology to ensure every change is documented, validated, and traceable.
+- **Strict Quality Control**: Integrating **Biome** for fast linting/formatting and enforcing strict TypeScript configurations.
+- **Refactoring**: Rewriting legacy AI-generated services and components into clean, maintainable, and type-safe code.
 
-This project uses the **OpenSpec** methodology for spec-driven development.
+## Methodology: OpenSpec
 
-1. **Structure**: Specifications are located in `openspec/specs/`.
-2. **Changes**: New features are proposed in `openspec/changes/`.
-3. **Workflow**: Follow the 3-stage cycle: `Proposal` -> `Apply` -> `Archive`.
-4. **Quality**: Before proposing a change, validate the specifications with the linter:
-   `node tools/lint-specs.cjs`
+This project follows the **OpenSpec** methodology for rigorous spec-driven development. 
 
-For more details, consult `openspec/AGENTS.md`.
+1. **Specifications**: Located in `openspec/specs/`. These define the "Source of Truth" for system capabilities.
+2. **Proposals**: New features or architectural changes are proposed in `openspec/changes/`.
+3. **Workflow**: We follow a 3-stage lifecycle: `Proposal` -> `Apply` -> `Archive`.
+4. **Validation**: All specifications are strictly validated using a custom linter to ensure normative language (`SHALL`/`MUST`) and scenario coverage.
 
-**Prerequisites:**  Node.js
+For more details on how AI agents and humans collaborate on this repo, see `openspec/AGENTS.md`.
 
+## Tech Stack
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- **Framework**: React 19 + Vite
+- **Monorepo Tooling**: pnpm workspaces + Turborepo
+- **Database & Auth**: Supabase
+- **Quality**: TypeScript (Strict), Biome (Linting & Formatting)
+- **UI**: Tailwind CSS, Lucide React, Recharts
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 22.0.0
+- pnpm >= 8.0.0
+
+### Installation
+
+```bash
+pnpm install
+```
+
+### Development
+
+Run the development server for all apps:
+
+```bash
+pnpm dev
+```
+
+The main web application is located in `apps/web-app`.
+
+---
+*Note: This repository is part of a portfolio demonstrating the transition from AI-generated prototypes to production-grade engineering.*
